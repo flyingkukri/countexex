@@ -13,6 +13,8 @@ find_package(storm REQUIRED)
 # specify source files
 set(SOURCE_FILES src/main.cpp)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 # set executable
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
