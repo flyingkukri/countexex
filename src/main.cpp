@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <random>
 #include <storm/api/storm.h>
 #include <storm-parsers/api/storm-parsers.h>
 #include <storm-parsers/parser/PrismParser.h>
@@ -7,6 +9,24 @@
 #include <storm/modelchecker/results/ExplicitQuantitativeCheckResult.h>
 #include <storm/utility/initialize.h>
 #include "storm/environment/solver/MinMaxSolverEnvironment.h"
+#include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
+#include <storm/simulator/PrismProgramSimulator.h>
+#include <storm/builder/BuilderOptions.h>
+#include <storm/storage/Scheduler.h>
+#include "storm/models/sparse/Model.h"
+
+#undef As
+// Define these to print extra informational output and warnings.
+#include <mlpack/methods/decision_tree/decision_tree.hpp>
+#define MLPACK_PRINT_INFO
+#define MLPACK_PRINT_WARN
+#include <mlpack.hpp>
+
+using namespace arma;
+using namespace mlpack;
+using namespace mlpack::tree;
+using namespace std;
+
 
 typedef storm::models::sparse::Mdp<double> Mdp;
 
@@ -30,8 +50,34 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
     return result;
 }
 
-bool check(std::string const& path_to_model, std::string const& property_string) {
 
+void simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, storm::storage::Scheduler<double> scheduler, int *imps) {
+    //create a random number generator for the liberal strategy
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<> dis(0.0, 1.0);
+
+    while(true){ // break if we reach F or we don't have any choices left in our current state
+         auto state = simulator.getCurrentState();
+         auto choices = scheduler.getChoice(state);
+         uint_fast64_t next;
+         if (choices.isDeterministic()) {
+            next = choices.getDeterministicChoice();
+         } else {
+            auto dist = choices.getChoiceAsDistribution();
+            dist.normalize(); // normalize so that we can sample a number between 1 and 0
+            int quantile = dis(gen);
+            next = dist.sampleFromDistribution(quantile); // This returns a statevalue...
+         }
+        simulator.step(next);
+    }
+}
+
+void testType(storm::models::sparse::Model<double> const& model) {
+    return;
+}
+
+bool check(std::string const& path_to_model, std::string const& property_string) {
     // 1. Generate liberal, e-optimal strategy s
 
     // Generate e-optimal scheduler
@@ -67,6 +113,25 @@ bool check(std::string const& path_to_model, std::string const& property_string)
 
     // 2. Simulate c runs under scheduler to approximate importance
 
+//    storm::generator::NextStateGeneratorOptions options = new storm::builder::BuilderOptions();
+//    storm::simulator::DiscreteTimePrismProgramSimulator<double> simulator(program, options);
+
+
+     // Our termination condition is that the property holds (we reach the target)
+     // TODO when should we terminate if it doesn't hold? If we reach a sink state?
+     // maybe we can log which actions we have already chosen and never take the same one twice.
+     
+    const int C = 10000;
+    int states = model->getNumberOfStates();
+    int *imps = (int*) malloc(states * sizeof(int));
+
+    auto model2 = model.get();
+    storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(*model);
+
+    for (int i =0; i++; i < C){
+       simulateRun(simulator, scheduler, imps);
+    }
+    
     // 3. Create training data
     // Repeat the samples importance times
     // Label the data: Include state-action pairs from the scheduler as positive examples
@@ -76,6 +141,7 @@ bool check(std::string const& path_to_model, std::string const& property_string)
 
     return quantRes[*model->getInitialStates().begin()] < 0.01;
 }
+
 
 
 int main (int argc, char *argv[]) {
