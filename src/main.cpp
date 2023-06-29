@@ -51,7 +51,7 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
 }
 
 
-void simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, storm::storage::Scheduler<double> scheduler, int *imps) {
+void simulateRunScheduler(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, storm::storage::Scheduler<double> scheduler, int *imps) {
     //create a random number generator for the liberal strategy
     random_device rd;
     mt19937 gen(rd());
