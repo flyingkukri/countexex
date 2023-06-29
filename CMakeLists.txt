@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(storm REQUIRED)
 
 # specify source files
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES src/main.cpp src/impCalc.cpp)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
