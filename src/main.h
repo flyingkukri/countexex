@@ -30,8 +30,8 @@ void model_vis(std::shared_ptr<MdpType>& model);
 template <typename MdpType>
 void print_state_act_pairs(std::shared_ptr<MdpType>& mdp);
 
-template <typename MdpType, typename T>
-std::map<std::string, std::list<T>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp);
+template <typename MdpType>
+std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp);
 
 /*!
  * Produces the dt_pipeline with input:

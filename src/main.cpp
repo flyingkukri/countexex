@@ -53,7 +53,6 @@ std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::
     return result;
 }
 
-
 std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTasks(
         std::vector<std::shared_ptr<storm::logic::Formula const>> const& formulas) {
     std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> result;
@@ -93,10 +92,10 @@ void print_state_act_pairs(std::shared_ptr<MdpType>& mdp){
     }
 }
 
-template <typename MdpType, typename T>
-std::map<std::string, std::list<int>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp){
+template <typename MdpType>
+std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp){
     auto val = mdp->getStateValuations();
-    std::map<std::string, std::list<T>> value_map;
+    std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> value_map;
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto a_count = mdp->getNumberOfChoices(i);
@@ -109,23 +108,29 @@ std::map<std::string, std::list<int>> create_state_act_pairs(std::shared_ptr<Mdp
                 if(start.getVariable().hasBooleanType()){
                     auto e = start.getBooleanValue();
                     if( it == value_map.end()){
-                        value_map.insert(std::make_pair(key, std::list<bool>{e}));
+                        value_map.insert(std::make_pair(key, std::vector<bool>{e}));
                     }else{
-                        it->second.push_back(e);
+                        auto& vector = std::get<std::vector<bool>>(it->second);
+                        vector.push_back(e);
                     }
                 }else if(start.getVariable().hasIntegerType()){
                     auto e = start.getIntegerValue();
                     if(it == value_map.end()){
-                        value_map.insert(std::make_pair(key, std::list<int>{e}));
+                        std::vector<int> int_vector;
+                        int_vector.push_back(e);
+                        value_map.insert(std::make_pair(key, int_vector));
                     }else{
-                        it->second.push_back(e);
-                    }
+                        auto& vector = std::get<std::vector<int>>(it->second);
+                        vector.push_back(e);                    }
                 }else if(start.getVariable().hasRationalType()){
                     auto e = start.getRationalValue();
                     if(it == value_map.end()){
-                        value_map.insert(std::make_pair(key, std::list<double>{e}));
+                        std::vector<storm::RationalNumber> rat_vector;
+                        rat_vector.push_back(e);
+                        value_map.insert(std::make_pair(key, rat_vector));
                     }else{
-                        it->second.push_back(e);
+                        auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
+                        vector.push_back(e);
                     }
                 }
                 start.operator++();
@@ -135,6 +140,66 @@ std::map<std::string, std::list<int>> create_state_act_pairs(std::shared_ptr<Mdp
         }
     }
     return value_map;
+}
+
+arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map){
+    arma::mat armaData;
+    for (const auto& pair : value_map) {
+    // Get the vector corresponding to the key
+        const std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector = pair.second;
+
+        // Create an arma::rowvec from the vector
+        arma::rowvec rowVec;
+        if (const auto intVector = std::get_if<std::vector<int>>(&valueVector)) {
+            rowVec = arma::conv_to<arma::rowvec>::from(*intVector);
+        } else if (const auto boolVector = std::get_if<std::vector<bool>>(&valueVector)) {
+            std::vector<int> intVector;
+            intVector.reserve(boolVector->size());
+            for (bool value : *boolVector) {
+                intVector.push_back(value ? 1 : 0);
+            }
+            rowVec = arma::conv_to<arma::rowvec>::from(intVector);
+        } else if (const auto ratVector = std::get_if<std::vector<storm::RationalNumber>>(&valueVector)) {
+        // TODO: convert storm::RationalNumber to double
+        //            arma::rowvec rowVec(ratVector->size());
+        //            for (std::size_t i = 0; i < ratVector->size(); ++i) {
+        //                rowVec(i) = storm::utility::convertNumber<double>(ratVector[i]);
+        //            }
+        }
+    // Append the row vector to the matrix
+        armaData = arma::join_vert(armaData, rowVec);
+    }
+    return armaData;
+}
+
+arma::Row<size_t> createDataLabels(arma::mat& all_pairs, arma::mat& strategy_pairs){
+    // column-major in arma: thus each column represents a data point
+    size_t numColumns = all_pairs.n_cols;
+    arma::Row<size_t> labels(numColumns, arma::fill::zeros);
+    for (size_t i = 0; i < numColumns; ++i) {
+        // Get the i-th column of all_pairs
+        auto found = 0;
+        arma::vec column = all_pairs.col(i);
+        for (size_t j = 0; j < strategy_pairs.n_cols; ++j) {
+            arma::vec col2Cmp = strategy_pairs.col(j);
+            if (arma::all(col2Cmp == column)) {
+                found = 1;
+                labels(i) = 1;
+                break;
+            }
+        }
+        if(!found) {
+            labels(i) = 0;
+        }
+    }
+    return labels;
+}
+
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map_submdp){
+    arma::mat all_pairs = createMatrixFromValueMap(value_map);
+    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+    arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
+    return std::make_pair(all_pairs, labels);
 }
 
 // Helper function to recursively traverse the decision tree and generate DOT representation.
@@ -222,7 +287,7 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
         std::cout <<  i << std::endl;
     }
     print_state_act_pairs(mdp);
-//    create_state_act_pairs<>(mdp);
+    auto value_map = create_state_act_pairs<>(mdp);
 
     storm::storage::Scheduler<double> const& scheduler = result0->asExplicitQuantitativeCheckResult<double>().getScheduler();
     scheduler.printToStream(std::cout, mdp);
@@ -259,6 +324,7 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     auto submdp = permissive_scheduler->apply();
     auto submdp_ptr = std::make_shared<decltype(submdp)>(submdp);
     print_state_act_pairs(submdp_ptr);
+    auto value_map_submdp = create_state_act_pairs<>(mdp);
 
 
     // Visualize submdp vs mdp
@@ -289,11 +355,20 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     //  Implement Test visualization for storm::storage::Scheduler<double> const& scheduler
     //  How to preprocess string data
     //  How to get dt structure that we want: nodes with state action info, comparison=<>..., leaf labels
-/*
-    arma::Row<size_t> labels{1,1,1,1,1,1,1,0,0,0};
-    arma::mat data = {{0,0},{1,1},{2,0},{3,0},{4,0},{5,0},{6,0},{7,1},{8,1},{9,0}};
-    mlpack::DecisionTree<> dt(data,labels,2);
-//    data::Save("dt.xml", "dt_model", dt);
+
+//    arma::mat all_pairs = createMatrixFromValueMap(value_map);
+//    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+//
+//    arma::cout << all_pairs << arma::endl;
+//    arma::cout << strategy_pairs << arma::endl;
+
+    std::pair<arma::mat, arma::Row<size_t>> result = createTrainingData(value_map, value_map_submdp);
+    auto all_pairs = result.first;
+    auto labels = result.second;
+    std::cout << "Labels: " << labels << std::endl;
+    mlpack::DecisionTree<> dt(all_pairs,labels,2);
+
+    /*    data::Save("dt.xml", "dt_model", dt);
 
     // Open the DOT file for writing.
     std::ofstream dotFile("decision_tree.dot");
@@ -305,7 +380,6 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
 
     dotFile << "}\n";
     dotFile.close();*/
-
 
     return true;
 }
