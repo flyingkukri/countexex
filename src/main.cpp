@@ -45,7 +45,7 @@ std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::
     options.setBuildStateValuations(true);
     options.setBuildObservationValuations(true);
     options.setBuildAllLabels(true);
-    options.setBuildChoiceOrigins();
+    options.setBuildChoiceOrigins(true);
 
     // Build the model
     result.first = storm::builder::ExplicitModelBuilder<double>(program, options).build()->as<storm::models::sparse::Mdp<double>>();
@@ -81,10 +81,11 @@ void print_state_act_pairs(std::shared_ptr<MdpType>& mdp){
             auto l = val.at(i);
             auto start = l.begin();
             while(start!=l.end()){
-                // TODO extend to other datatypes: bool, double ...
+                // TODO: extend to other datatypes: bool, double ... aber nur für uns also nicht unbedingt nötig
                 std::cout << start.getVariable().getName() << ": " << start.getIntegerValue() << " ";
                 start.operator++();
             }
+            // This info should be present in the dt in the end and is represented via mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
             auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
             std::cout << a << " ";
             std::cout << "\n" << std::endl;
@@ -135,8 +136,18 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vec
                 }
                 start.operator++();
             }
-            //TODO store actions in value_map
-            auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+            // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
+            auto key = "action";
+            auto elem = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+            auto it = value_map.find(key);
+            if(it == value_map.end()){
+                std::vector<int> int_vector;
+                int_vector.push_back(elem);
+                value_map.insert(std::make_pair(key, int_vector));
+            }else{
+                auto& vector = std::get<std::vector<int>>(it->second);
+                vector.push_back(elem);
+            }
         }
     }
     return value_map;
@@ -273,11 +284,21 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
                 std::cout << start.getVariable().getName() << ": " << start.getIntegerValue() << " ";
                 start.operator++();
             }
+
             auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
             std::cout << a << " ";
             std::cout << "\n" << std::endl;
         }
     }
+    std::vector<int> action_row;
+    std::map<std::string,int> action_value_map;
+
+    // create mapping from actions to categorical values
+    for(int i=0; i<mdp->getChoiceOrigins()->getNumberOfChoices();++i){
+        auto res = mdp->getChoiceOrigins()->getIdentifier(i);
+        std::cout << "Print choice identifier: " << mdp->getChoiceOrigins()->getIdentifier(i) << "; Print info: " << mdp->getChoiceOrigins()->getChoiceInfo(i);
+    }
+    mdp->getChoiceOrigins()->getNumberOfChoices();
 
     // Get check result for Pmax property
     auto e_opt_res = result0->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
@@ -324,7 +345,7 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     auto submdp = permissive_scheduler->apply();
     auto submdp_ptr = std::make_shared<decltype(submdp)>(submdp);
     print_state_act_pairs(submdp_ptr);
-    auto value_map_submdp = create_state_act_pairs<>(mdp);
+    auto value_map_submdp = create_state_act_pairs<>(submdp_ptr);
 
 
     // Visualize submdp vs mdp
@@ -347,23 +368,21 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     //  Create list of all state-action pairs
     //  Label state-action pairs from the scheduler as positive examples and others as negative examples
 
-    //    for(int i=0;i<choiceOrig->getNumberOfChoices();++i){
-    //        std::cout << "choice info: " << choiceOrig->getChoiceInfo(i) << std::endl;
-    //    }
+
 
     // TODO 4. DT learning:
     //  Implement Test visualization for storm::storage::Scheduler<double> const& scheduler
     //  How to preprocess string data
     //  How to get dt structure that we want: nodes with state action info, comparison=<>..., leaf labels
 
-//    arma::mat all_pairs = createMatrixFromValueMap(value_map);
-//    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
-//
-//    arma::cout << all_pairs << arma::endl;
-//    arma::cout << strategy_pairs << arma::endl;
+    arma::mat all_pairs = createMatrixFromValueMap(value_map);
+    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+
+    arma::cout << all_pairs << arma::endl;
+    arma::cout << strategy_pairs << arma::endl;
 
     std::pair<arma::mat, arma::Row<size_t>> result = createTrainingData(value_map, value_map_submdp);
-    auto all_pairs = result.first;
+    all_pairs = result.first;
     auto labels = result.second;
     std::cout << "Labels: " << labels << std::endl;
     mlpack::DecisionTree<> dt(all_pairs,labels,2);
