@@ -19,13 +19,15 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
+#undef As
+#include <mlpack.hpp>
+#include <mlpack/core.hpp>
+#include <mlpack/core/data/load.hpp>
+#include <mlpack/core/data/save.hpp>
+#include <mlpack/methods/decision_tree/decision_tree.hpp>
+#include <armadillo>
 
-//#include <mlpack.hpp>
-//#include <mlpack/core.hpp>
-//#include <mlpack/core/data/load.hpp>
-//#include <mlpack/core/data/save.hpp>
-//#include <mlpack/methods/decision_tree/decision_tree.hpp>
-//#include <armadillo>
 
 
 std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::shared_ptr<storm::logic::Formula const>>> buildModelFormulas(
@@ -63,12 +65,107 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
     return result;
 }
 
-void model_vis(std::shared_ptr<storm::models::sparse::Mdp<double>>& model){
+template <typename MdpType>
+void model_vis(std::shared_ptr<MdpType>& model){
     model->printModelInformationToStream(std::cout);
     auto trans_M = model->getTransitionMatrix();
     trans_M.printAsMatlabMatrix(std::cout);
 }
 
+template <typename MdpType>
+void print_state_act_pairs(std::shared_ptr<MdpType>& mdp){
+    auto val = mdp->getStateValuations();
+    std::cout << "Print (s-a)-pairs: " << std::endl;
+    for(int i=0; i<mdp->getNumberOfStates(); ++i){
+        auto a_count = mdp->getNumberOfChoices(i);
+        for(int k=0;k<a_count;++k){
+            auto l = val.at(i);
+            auto start = l.begin();
+            while(start!=l.end()){
+                // TODO extend to other datatypes: bool, double ...
+                std::cout << start.getVariable().getName() << ": " << start.getIntegerValue() << " ";
+                start.operator++();
+            }
+            auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+            std::cout << a << " ";
+            std::cout << "\n" << std::endl;
+        }
+    }
+}
+
+template <typename MdpType, typename T>
+std::map<std::string, std::list<int>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp){
+    auto val = mdp->getStateValuations();
+    std::map<std::string, std::list<T>> value_map;
+
+    for(int i=0; i<mdp->getNumberOfStates(); ++i){
+        auto a_count = mdp->getNumberOfChoices(i);
+        for(int k=0;k<a_count;++k){
+            auto l = val.at(i);
+            auto start = l.begin();
+            while(start!=l.end()){
+                auto key = start.getVariable().getName();
+                auto it = value_map.find(key);
+                if(start.getVariable().hasBooleanType()){
+                    auto e = start.getBooleanValue();
+                    if( it == value_map.end()){
+                        value_map.insert(std::make_pair(key, std::list<bool>{e}));
+                    }else{
+                        it->second.push_back(e);
+                    }
+                }else if(start.getVariable().hasIntegerType()){
+                    auto e = start.getIntegerValue();
+                    if(it == value_map.end()){
+                        value_map.insert(std::make_pair(key, std::list<int>{e}));
+                    }else{
+                        it->second.push_back(e);
+                    }
+                }else if(start.getVariable().hasRationalType()){
+                    auto e = start.getRationalValue();
+                    if(it == value_map.end()){
+                        value_map.insert(std::make_pair(key, std::list<double>{e}));
+                    }else{
+                        it->second.push_back(e);
+                    }
+                }
+                start.operator++();
+            }
+            //TODO store actions in value_map
+            auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+        }
+    }
+    return value_map;
+}
+
+// Helper function to recursively traverse the decision tree and generate DOT representation.
+/*void GenerateDot(mlpack::DecisionTree<>& node, std::ofstream& dotFile, int& nodeCounter)
+{
+    if (node.Child(0) == nullptr)  // Leaf node.
+    {
+        dotFile << "  " << nodeCounter << " [label=\"" << node. << "\"];\n";
+    }
+    else  // Non-leaf node.
+    {
+        std::string splitRule;
+        if (node.SplitDimension() != size_t(-1))
+        {
+            splitRule = "x" + std::to_string(node.SplitDimension()) + " <= " +
+                        std::to_string(node.SplitValue());
+        }
+        else
+        {
+            splitRule = "unknown";
+        }
+
+        dotFile << "  " << nodeCounter << " [label=\"" << splitRule << "\"];\n";
+
+        for (size_t i = 0; i < node.NumChildren(); ++i)
+        {
+            dotFile << "  " << nodeCounter << " -> " << ++nodeCounter << ";\n";
+            GenerateDot(*node.Child(i), dotFile, nodeCounter);
+        }
+    }
+}*/
 
 bool pipeline(std::string const& path_to_model, std::string const& property_string = "") {
 
@@ -77,8 +174,10 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     // TODO: currently works only for path_to_model = examples/die_c1.nm
     //  Properties should be in property_string in the future: lines below just for quick testing
 
-    //    std::string formulasString = "Pmax=? [ F (l=4 & ip=1) ]; P>=x [ F \"goal1\" ]";
-    //    std::string formulasString = "Pmax=? [ F \"goal1\"]; P<=0.5 [ F \"goal1\" ]";
+    //        std::string formulasString = "Pmax=? [ F (l=4 & ip=1) ]; P>=x [ F \"goal1\" ]";
+//    std::string formulasString = "Pmax=? [ F (l=4 & ip=1) ];";
+//        std::string formulasString = "Pmax=? [ F \"goal1\"]; P<=0.5 [ F \"goal1\" ]";
+//    std::string formulasString = "Pmax=? [ F s=5];";
     //    std::string formulasString = "Pmax=? [ F \"one\"]; P>=0.166665 [ F \"one\"];\n";
     std::string formulasString = "Pmax=? [ F \"one\"];";
 
@@ -98,6 +197,23 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     std::unique_ptr<storm::modelchecker::CheckResult> result0 = checker0.check(env, tasks[0]);
     auto quantitativeResult0 = result0->asExplicitQuantitativeCheckResult<double>().getValueVector();
 
+    auto val = mdp->getStateValuations();
+    std::cout << "Print (s-a)-pairs: " << std::endl;
+    for(int i=0; i<mdp->getNumberOfStates(); ++i){
+        auto a_count = mdp->getNumberOfChoices(i);
+        for(int k=0;k<a_count;++k){
+            auto l = val.at(i);
+            auto start = l.begin();
+            while(start!=l.end()){
+                std::cout << start.getVariable().getName() << ": " << start.getIntegerValue() << " ";
+                start.operator++();
+            }
+            auto a = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+            std::cout << a << " ";
+            std::cout << "\n" << std::endl;
+        }
+    }
+
     // Get check result for Pmax property
     auto e_opt_res = result0->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
     std::cout << "Check result from Pmax=? [ F psi]: " << e_opt_res << std::endl;
@@ -105,6 +221,9 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     for(auto i: quantitativeResult0){
         std::cout <<  i << std::endl;
     }
+    print_state_act_pairs(mdp);
+//    create_state_act_pairs<>(mdp);
+
     storm::storage::Scheduler<double> const& scheduler = result0->asExplicitQuantitativeCheckResult<double>().getScheduler();
     scheduler.printToStream(std::cout, mdp);
 
@@ -129,7 +248,6 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     boost::optional<storm::ps::SubMDPPermissiveScheduler<>> permissive_scheduler = storm::ps::computePermissiveSchedulerViaSMT<>(*mdp, formula);
     std::cout << "Is the permissive scheduler initialized? " << (permissive_scheduler.is_initialized()) << std::endl;
 
-
     //TODO:
     // permissive_scheduler: error for robot example why?
     // permissive_scheduler: infinite run for zeroconfig example?
@@ -139,14 +257,15 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     // Then we would simply need to simulate runs on this MDP by choosing actions at each state uniformly at random?
 
     auto submdp = permissive_scheduler->apply();
+    auto submdp_ptr = std::make_shared<decltype(submdp)>(submdp);
+    print_state_act_pairs(submdp_ptr);
+
 
     // Visualize submdp vs mdp
     std::cout << "Information about submdp under permissive strategy: " << std::endl;
-    submdp.printModelInformationToStream(std::cout);
-    auto trans_M = submdp.getTransitionMatrix();
-    trans_M.printAsMatlabMatrix(std::cout);
+//    model_vis(submdp_ptr);
     std::cout << "Information about mdp: " << std::endl;
-    model_vis(mdp);
+//    model_vis(mdp);
 
     storm::modelchecker::SparseMdpPrctlModelChecker<storm::models::sparse::Mdp<double>> checker1(submdp);
     std::unique_ptr<storm::modelchecker::CheckResult> result1 = checker1.check(env,tasks[0]);
@@ -170,11 +289,22 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     //  Implement Test visualization for storm::storage::Scheduler<double> const& scheduler
     //  How to preprocess string data
     //  How to get dt structure that we want: nodes with state action info, comparison=<>..., leaf labels
-
-//    arma::Row<size_t> labels{1,1,1,1,1,1,1,0,0,0};
-//    arma::mat data = {{0,0},{1,1},{2,0},{3,0},{4,0},{5,0},{6,0},{7,1},{8,1},{9,0}};
-//    mlpack::DecisionTree<> dt(data,labels,2);
+/*
+    arma::Row<size_t> labels{1,1,1,1,1,1,1,0,0,0};
+    arma::mat data = {{0,0},{1,1},{2,0},{3,0},{4,0},{5,0},{6,0},{7,1},{8,1},{9,0}};
+    mlpack::DecisionTree<> dt(data,labels,2);
 //    data::Save("dt.xml", "dt_model", dt);
+
+    // Open the DOT file for writing.
+    std::ofstream dotFile("decision_tree.dot");
+    dotFile << "digraph DecisionTree {\n";
+
+    // Generate the DOT representation recursively.
+    int nodeCounter = 0;
+    GenerateDot(dt, dotFile, nodeCounter);
+
+    dotFile << "}\n";
+    dotFile.close();*/
 
 
     return true;

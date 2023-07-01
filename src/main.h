@@ -24,7 +24,15 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
 /*!
  * Visualize a model: state & choice labels, transition matrix ...
  */
-void model_vis(std::shared_ptr<storm::models::sparse::Mdp<double>>& model);
+template <typename MdpType>
+void model_vis(std::shared_ptr<MdpType>& model);
+
+template <typename MdpType>
+void print_state_act_pairs(std::shared_ptr<MdpType>& mdp);
+
+template <typename MdpType, typename T>
+std::map<std::string, std::list<T>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp);
+
 /*!
  * Produces the dt_pipeline with input:
  * @param path_to_model, property_string
