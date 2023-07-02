@@ -1,6 +1,6 @@
 #include "impCalc.hpp"
 
-void simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
+int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
                  storm::models::sparse::Mdp<double> model, int *visited, int l) {
     int state;
     for (int i = 0; i < l; i++) { 
@@ -10,6 +10,7 @@ void simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simu
         if(model.isSinkState(state)) {
             break;
         }
+        // TODO return 1 if we are in a final state
     }
     simulator.resetToInitial();
 }
