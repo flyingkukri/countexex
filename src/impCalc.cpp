@@ -2,6 +2,7 @@
 
 int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
                  storm::models::sparse::Mdp<double> model, int *visited, int l) {
+    int finalState = 0;
     int state;
     for (int i = 0; i < l; i++) { 
         state = simulator.getCurrentState();
@@ -13,6 +14,7 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
         // TODO return 1 if we are in a final state
     }
     simulator.resetToInitial();
+    return finalState;
 }
 
 int* calculateImps(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
@@ -23,10 +25,12 @@ int* calculateImps(storm::simulator::DiscreteTimeSparseModelSimulator<double> si
     
 
     for (int i = 0; i < C; i++) {
-        simulateRun(simulator, model, visited, l);
-        for (int i = 0; i < nstates; i++) {
-            imps[i] += visited[i];
-            visited[i] = 0;
+        // simulateRun returns 1 if we are in a final state
+        if(simulateRun(simulator, model, visited, l)){
+            for (int i = 0; i < nstates; i++) {
+                imps[i] += visited[i];
+                visited[i] = 0;
+            }
         }
     }
 

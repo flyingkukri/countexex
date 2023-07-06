@@ -17,6 +17,7 @@
 #include <storm/modelchecker/prctl/SparseMdpPrctlModelChecker.h>
 #include <storm/models/sparse/StandardRewardModel.h>
 #include <storm-permissive/analysis/PermissiveSchedulerPenalty.h>
+#include <storm-permissive/analysis/PermissiveSchedulers.h>
 #include <bits/stdc++.h>
 #include "main.h"
 #include <iostream>
@@ -35,7 +36,45 @@
 #include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
 
 //#include "impCalc.hpp"
+//#include "utils.hpp"
 
+int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ostream& output, size_t nodeIndex) {
+  // Print this node.
+  output << "node" << nodeIndex << " [label=\"";
+
+  // This is a leaf node.
+  if (dt.NumChildren() == 0){
+  
+    // In this case classProbabilities will hold the information for the 
+    // probabilites if each class.
+    auto probs = dt.getClassProbabilities();
+    int maxClass = probs.index_max();
+    output << "Leaf\nLabel: " << maxClass << "\\n";
+  
+  } else {
+    // This is a splitting node.
+    output << "Split\nFeature: " << dt.SplitDimension() << "\\n";
+    // If the node isn't a leaf, getClassProbabilities() returns the splitinfo
+    output << "Threshold: " << dt.getClassProbabilities() << "\\n";
+  }
+
+  output << "\"];\n";
+
+    // Recurse to children.
+  int highestIndex = nodeIndex;
+  for (size_t i = 0; i < dt.NumChildren(); ++i)
+  {
+    output << "node" << nodeIndex << " -> node" << (highestIndex + 1) << ";\n";
+    highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1);
+  }
+  return highestIndex;
+}
+
+void printTreeToDot(mlpack::DecisionTree<>& dt, std::ostream& output) {
+  output << "digraph G {\n";
+  printTreeToDotHelp(dt, output, 0);
+  output << "}\n";
+}
 
 
 std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::shared_ptr<storm::logic::Formula const>>> buildModelFormulas(
@@ -398,20 +437,19 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     all_pairs = result.first;
     auto labels = result.second;
     std::cout << "Labels: " << labels << std::endl;
-    mlpack::DecisionTree<> dt(all_pairs,labels,2);
+    mlpack::DecisionTree<> dt(all_pairs,labels,2, 1, 1e-7, 10);
 
-    /*    data::Save("dt.xml", "dt_model", dt);
+    arma::Row<size_t> testPredictions;
+    dt.Classify(all_pairs, testPredictions);
+    for (size_t pred: testPredictions) {
+        std::cout << pred << std::endl;
+    }
 
-    // Open the DOT file for writing.
-    std::ofstream dotFile("decision_tree.dot");
-    dotFile << "digraph DecisionTree {\n";
-
-    // Generate the DOT representation recursively.
-    int nodeCounter = 0;
-    GenerateDot(dt, dotFile, nodeCounter);
-
-    dotFile << "}\n";
-    dotFile.close();*/
+    // Visualize the tree
+    std::ofstream file;
+    file.open ("graph.dot");
+    printTreeToDot(dt, std::cout);
+    file.close();
 
     return true;
 }
