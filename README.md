@@ -10,7 +10,9 @@ lorem ipsum
     cmake ..
     make
 ## Running
-Supply a model at the end of which the label goal is given to the states F, e.g.
-    label "goal" = s=1|s=2;
 Run the following command:
     countexex model.nm
+### Model requirements
+- Supply a model at the end of which the label goal is given to the states F, e.g.
+    label "goal" = s=1|s=2;
+- All final states are sink states
