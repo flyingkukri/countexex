@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <cstdlib>
 #include <random>
 #include <storm/api/storm.h>
 #include <storm-parsers/api/storm-parsers.h>
@@ -38,41 +40,44 @@
 //#include "utils.hpp"
 
 int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
-                 storm::models::sparse::Mdp<double> model, int *visited, int l, std::string const& label) {
-    int state;
+                 storm::models::sparse::Mdp<double> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates) {
+    uint64_t seed = random();
+    simulator.setSeed(seed);
+    int state = simulator.getCurrentState();
     for (int i = 0; i < l; i++) { 
-        state = simulator.getCurrentState();
-        visited[state] = 1;
-        simulator.randomStep();
-        if(model.hasLabel(label)) {
+        if(finalStates.get(state)) {
             return 1; // We assume that final states are sink states
         }
         if(model.isSinkState(state)) {
             break;
         }
+        state = simulator.getCurrentState();
+        visited[state] = 1;
+        simulator.randomStep();
     }
     simulator.resetToInitial();
     return 0;
 }
 
-int* calculateImps(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
+std::vector<int> calculateImps(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, 
                  storm::models::sparse::Mdp<double> model, int l, int C, const std::string& label) {
     int nstates = model.getNumberOfStates();
-    int *imps = new int[nstates];
-    int *visited = new int[nstates];
-    
+    std::vector<int> imps(nstates, 0);
+    std::vector<int> visited(nstates, 0);
+    std::cout << "nstates: " << nstates << std::endl;
+    storm::storage::BitVector finalStates = model.getStates(label);
 
     for (int i = 0; i < C; i++) {
         // simulateRun returns 1 if we are in a final state
-        if(simulateRun(simulator, model, visited, l, label)){
-            for (int i = 0; i < nstates; i++) {
-                imps[i] += visited[i];
-                visited[i] = 0;
+        if(simulateRun(simulator, model, visited, l, finalStates)){
+            for (int j = 0; j < nstates; j++) {
+                assert(visited[j] == 0 || visited[j] == 1);
+                imps[j] += visited[j];
+                visited[j] = 0;
             }
         }
     }
 
-    delete [] visited;
     return imps;
 }
 
@@ -329,7 +334,7 @@ std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string,
     }
 }*/
 
-bool pipeline(std::string const& path_to_model, std::string const& property_string = "") {
+bool pipeline(std::string const& path_to_model, config  const& conf, std::string const& property_string = "") {
 
     // Setup:
 
@@ -341,8 +346,10 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
 //        std::string formulasString = "Pmax=? [ F \"goal1\"]; P<=0.5 [ F \"goal1\" ]";
 //    std::string formulasString = "Pmax=? [ F s=5];";
     //    std::string formulasString = "Pmax=? [ F \"one\"]; P>=0.166665 [ F \"one\"];\n";
+    
+    std::string label = "goal";
     std::string formulasString = 
-"Pmax=? [ F ((x>=2) | (y>=2) | (z>=2)) ]";
+"Pmax=? [ F \"" + label + " \"];";
 
 
     // Set up environment: solver method and precision
@@ -451,22 +458,22 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
 
     // TODO 2. Simulate c runs under scheduler to approximate importance
     int l, C;
-    l = C = 10000;
+    l = conf.l;
+    C = conf.C;
     storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(submdp);
- //   int* imps = calculateImps(simulator, submdp, l, C);
+    std::vector<int> imps = calculateImps(simulator, submdp, l, C, label);
+    size_t impsSize = submdp.getNumberOfStates();
+
+    std::cout << "imps: " << std::endl;
+    for(int imp: imps) {
+        std::cout << imp << std::endl;
+    }
 
     // TODO 3. Create training data
     // TODO Repeat the samples importance times
     // TODO Label the data:
     //  Create list of all state-action pairs
     //  Label state-action pairs from the scheduler as positive examples and others as negative examples
-
-
-
-    // TODO 4. DT learning:
-    //  Implement Test visualization for storm::storage::Scheduler<double> const& scheduler
-    //  How to preprocess string data
-    //  How to get dt structure that we want: nodes with state action info, comparison=<>..., leaf labels
 
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
@@ -478,6 +485,14 @@ bool pipeline(std::string const& path_to_model, std::string const& property_stri
     all_pairs = result.first;
     auto labels = result.second;
     std::cout << "Labels: " << labels << std::endl;
+
+    
+    
+    // TODO 4. DT learning:
+    //  Implement Test visualization for storm::storage::Scheduler<double> const& scheduler
+    //  How to preprocess string data
+    //  How to get dt structure that we want: nodes with state action info, comparison=<>..., leaf labels
+
     mlpack::DecisionTree<> dt(all_pairs,labels,2, 1, 1e-7, 10);
 
     arma::Row<size_t> testPredictions;
@@ -508,6 +523,11 @@ int main (int argc, char *argv[]) {
     // Set some settings objects.
     storm::settings::initializeAll("storm-starter-project", "storm-starter-project");
 
+    config conf;
+    conf.C = 10000;
+    conf.l = 10000;
+    conf.delta = 0.001;
+
     // Call function
-    pipeline(argv[1], argv[2]);
+    pipeline(argv[1], conf, argv[2]);
 }

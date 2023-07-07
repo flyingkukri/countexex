@@ -8,6 +8,12 @@
 
 typedef storm::models::sparse::Mdp<double> Mdp;
 
+typedef struct config{
+        double delta;
+        int C;
+        int l;
+} config;
+
 
 /*!
  * Build the model and the formulas
