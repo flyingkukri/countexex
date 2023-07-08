@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstdlib>
+#include <numeric>
 #include <random>
 #include <storm/api/storm.h>
 #include <storm-parsers/api/storm-parsers.h>
@@ -185,64 +186,84 @@ void print_state_act_pairs(std::shared_ptr<MdpType>& mdp){
 }
 
 template <typename MdpType>
-std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp){
+std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> create_state_act_pairs(std::shared_ptr<MdpType>& mdp, std::vector<int> imps){
     auto val = mdp->getStateValuations();
     std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> value_map;
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto a_count = mdp->getNumberOfChoices(i);
-        for(int k=0;k<a_count;++k){
-            auto l = val.at(i);
-            auto start = l.begin();
-            while(start!=l.end()){
-                auto key = start.getVariable().getName();
-                auto it = value_map.find(key);
-                if(start.getVariable().hasBooleanType()){
-                    auto e = start.getBooleanValue();
-                    if( it == value_map.end()){
-                        value_map.insert(std::make_pair(key, std::vector<bool>{e}));
-                    }else{
-                        auto& vector = std::get<std::vector<bool>>(it->second);
-                        vector.push_back(e);
+        for(int repeat = 0; repeat < imps[i]; repeat++){
+            for(int k=0;k<a_count;++k){
+                auto l = val.at(i);
+                auto start = l.begin();
+                while(start!=l.end()){
+                    auto key = start.getVariable().getName();
+                    auto it = value_map.find(key);
+                    if(start.getVariable().hasBooleanType()){
+                        auto e = start.getBooleanValue();
+                        if( it == value_map.end()){
+                            value_map.insert(std::make_pair(key, std::vector<bool>{e}));
+                        }else{
+                            auto& vector = std::get<std::vector<bool>>(it->second);
+                            vector.push_back(e);
+                        }
+                    }else if(start.getVariable().hasIntegerType()){
+                        auto e = start.getIntegerValue();
+                        if(it == value_map.end()){
+                            std::vector<int> int_vector;
+                            int_vector.push_back(e);
+                            value_map.insert(std::make_pair(key, int_vector));
+                        }else{
+                            auto& vector = std::get<std::vector<int>>(it->second);
+                            vector.push_back(e);                    }
+                    }else if(start.getVariable().hasRationalType()){
+                        auto e = start.getRationalValue();
+                        if(it == value_map.end()){
+                            std::vector<storm::RationalNumber> rat_vector;
+                            rat_vector.push_back(e);
+                            value_map.insert(std::make_pair(key, rat_vector));
+                        }else{
+                            auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
+                            vector.push_back(e);
+                        }
                     }
-                }else if(start.getVariable().hasIntegerType()){
-                    auto e = start.getIntegerValue();
-                    if(it == value_map.end()){
-                        std::vector<int> int_vector;
-                        int_vector.push_back(e);
-                        value_map.insert(std::make_pair(key, int_vector));
-                    }else{
-                        auto& vector = std::get<std::vector<int>>(it->second);
-                        vector.push_back(e);                    }
-                }else if(start.getVariable().hasRationalType()){
-                    auto e = start.getRationalValue();
-                    if(it == value_map.end()){
-                        std::vector<storm::RationalNumber> rat_vector;
-                        rat_vector.push_back(e);
-                        value_map.insert(std::make_pair(key, rat_vector));
-                    }else{
-                        auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
-                        vector.push_back(e);
-                    }
+                    start.operator++();
                 }
-                start.operator++();
-            }
-            // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
-            auto key = "action";
-            auto elem = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
-            auto it = value_map.find(key);
-            if(it == value_map.end()){
-                std::vector<int> int_vector;
-                int_vector.push_back(elem);
-                value_map.insert(std::make_pair(key, int_vector));
-            }else{
-                auto& vector = std::get<std::vector<int>>(it->second);
-                vector.push_back(elem);
+                // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
+                auto key = "action";
+                auto elem = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+                auto it = value_map.find(key);
+                if(it == value_map.end()){
+                    std::vector<int> int_vector;
+                    int_vector.push_back(elem);
+                    value_map.insert(std::make_pair(key, int_vector));
+                }else{
+                    auto& vector = std::get<std::vector<int>>(it->second);
+                    vector.push_back(elem);
+                }
+            
             }
         }
     }
     return value_map;
 }
+
+//arma::mat repeatColumns(arma::mat& matrix, std::vector<int> imps){
+//    int n = std::accumulate(imps.begin(), imps.end(), 0);
+//
+//    arma::mat result(matrix.n_rows, matrix.n_cols*n);
+//
+//    // index is the position in the result matrix
+//    int index = 0;
+//    for(int i=0; i<imps.size(); ++i){ // i is the index in the parameter matrix
+//        // get the row vector[i] and repeat it imps[i] times 
+//        auto currentVector = arma::repmat(matrix.col(i), 1, imps[i]);
+//        // insert it at position index
+//        result.cols(index, index+imps[i]-1) = currentVector; 
+//        index += imps[i];
+//    }
+//    return result;
+//}   
 
 arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map){
     arma::mat armaData;
@@ -403,7 +424,9 @@ bool pipeline(std::string const& path_to_model, config  const& conf, std::string
         std::cout <<  i << std::endl;
     }
     print_state_act_pairs(mdp);
-    auto value_map = create_state_act_pairs<>(mdp);
+    
+    auto impsOnes = std::vector<int>(mdp->getNumberOfStates(), 1);
+    auto value_map = create_state_act_pairs<>(mdp, impsOnes);
 
     storm::storage::Scheduler<double> const& scheduler = result0->asExplicitQuantitativeCheckResult<double>().getScheduler();
     scheduler.printToStream(std::cout, mdp);
@@ -441,7 +464,7 @@ bool pipeline(std::string const& path_to_model, config  const& conf, std::string
     auto submdp = permissive_scheduler->apply();
     auto submdp_ptr = std::make_shared<decltype(submdp)>(submdp);
     print_state_act_pairs(submdp_ptr);
-    auto value_map_submdp = create_state_act_pairs<>(submdp_ptr);
+    auto value_map_submdp = create_state_act_pairs<>(submdp_ptr, impsOnes);
 
 
     // Visualize submdp vs mdp
@@ -474,9 +497,11 @@ bool pipeline(std::string const& path_to_model, config  const& conf, std::string
     // TODO Label the data:
     //  Create list of all state-action pairs
     //  Label state-action pairs from the scheduler as positive examples and others as negative examples
+    auto value_map_imps = create_state_act_pairs<>(mdp, imps);
+    auto value_map_imps_submdp = create_state_act_pairs<>(submdp_ptr, imps);
 
-    arma::mat all_pairs = createMatrixFromValueMap(value_map);
-    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+    arma::mat all_pairs = createMatrixFromValueMap(value_map_imps);
+    auto strategy_pairs = createMatrixFromValueMap(value_map_imps_submdp);
 
     arma::cout << all_pairs << arma::endl;
     arma::cout << strategy_pairs << arma::endl;

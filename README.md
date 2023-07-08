@@ -16,3 +16,6 @@ Run the following command:
 - Supply a model at the end of which the label goal is given to the states F, e.g.
     label "goal" = s=1|s=2;
 - All final states are sink states
+
+## Development
+[Click here for information regarding our code structure](doc/develop.md)
