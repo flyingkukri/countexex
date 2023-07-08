@@ -61,57 +61,62 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vec
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto a_count = mdp->getNumberOfChoices(i);
-        for(int repeat = 0; repeat < imps[i]; repeat++){
-            for(int k=0;k<a_count;++k){
-                auto l = val.at(i);
-                auto start = l.begin();
-                while(start!=l.end()){
-                    auto key = start.getVariable().getName();
-                    auto it = value_map.find(key);
-                    if(start.getVariable().hasBooleanType()){
-                        auto e = start.getBooleanValue();
-                        if( it == value_map.end()){
-                            value_map.insert(std::make_pair(key, std::vector<bool>{e}));
-                        }else{
-                            auto& vector = std::get<std::vector<bool>>(it->second);
-                            vector.push_back(e);
-                        }
-                    }else if(start.getVariable().hasIntegerType()){
-                        auto e = start.getIntegerValue();
-                        if(it == value_map.end()){
-                            std::vector<int> int_vector;
-                            int_vector.push_back(e);
-                            value_map.insert(std::make_pair(key, int_vector));
-                        }else{
-                            auto& vector = std::get<std::vector<int>>(it->second);
-                            vector.push_back(e);                    }
-                    }else if(start.getVariable().hasRationalType()){
-                        auto e = start.getRationalValue();
-                        if(it == value_map.end()){
-                            std::vector<storm::RationalNumber> rat_vector;
-                            rat_vector.push_back(e);
-                            value_map.insert(std::make_pair(key, rat_vector));
-                        }else{
-                            auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
-                            vector.push_back(e);
-                        }
-                    }
-                    start.operator++();
-                }
-                // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
-                auto key = "action";
-                auto elem = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+        for(int k=0;k<a_count;++k){
+            auto l = val.at(i);
+            auto start = l.begin();
+            while(start!=l.end()){
+                auto key = start.getVariable().getName();
                 auto it = value_map.find(key);
-                if(it == value_map.end()){
-                    std::vector<int> int_vector;
-                    int_vector.push_back(elem);
-                    value_map.insert(std::make_pair(key, int_vector));
+                // add the id of the current element
+                if( it == value_map.end()){
+                    value_map.insert(std::make_pair(key, std::vector<int>{i}));
                 }else{
                     auto& vector = std::get<std::vector<int>>(it->second);
-                    vector.push_back(elem);
+                    vector.push_back(i);
                 }
-            
+                if(start.getVariable().hasBooleanType()){
+                    auto e = start.getBooleanValue();
+                    if( it == value_map.end()){
+                        value_map.insert(std::make_pair(key, std::vector<bool>{e}));
+                    }else{
+                        auto& vector = std::get<std::vector<bool>>(it->second);
+                        vector.push_back(e);
+                    }
+                }else if(start.getVariable().hasIntegerType()){
+                    auto e = start.getIntegerValue();
+                    if(it == value_map.end()){
+                        std::vector<int> int_vector;
+                        int_vector.push_back(e);
+                        value_map.insert(std::make_pair(key, int_vector));
+                    }else{
+                        auto& vector = std::get<std::vector<int>>(it->second);
+                        vector.push_back(e);                    }
+                }else if(start.getVariable().hasRationalType()){
+                    auto e = start.getRationalValue();
+                    if(it == value_map.end()){
+                        std::vector<storm::RationalNumber> rat_vector;
+                        rat_vector.push_back(e);
+                        value_map.insert(std::make_pair(key, rat_vector));
+                    }else{
+                        auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
+                        vector.push_back(e);
+                    }
+                }
+                start.operator++();
             }
+            // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
+            auto key = "action";
+            auto elem = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
+            auto it = value_map.find(key);
+            if(it == value_map.end()){
+                std::vector<int> int_vector;
+                int_vector.push_back(elem);
+                value_map.insert(std::make_pair(key, int_vector));
+            }else{
+                auto& vector = std::get<std::vector<int>>(it->second);
+                vector.push_back(elem);
+            }
+        
         }
     }
     return value_map;
@@ -122,4 +127,6 @@ arma::mat createMatrixFromValueMap(
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMapSubmdp);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMapSubmdp, std::vector<int> importance);
+
+std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance);

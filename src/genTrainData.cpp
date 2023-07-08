@@ -63,9 +63,23 @@ arma::Row<size_t> createDataLabels(arma::mat& allPairs, arma::mat& strategyPairs
     return labels;
 }
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map_submdp){
+std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance){
+    arma::mat data_new;
+    arma::Row<size_t> labels_new;
+    // TODO foreach loop
+    for(int r = 0; r < data.n_rows; r++ ) {
+        // Our stateIndex is the first column.
+        int stateIndex = data[r, 1]; 
+        // Repeat the s-a pair as often as the importance of the state
+        data_new = arma::join_cols(data_new, arma::repmat(data.row(r), importance[stateIndex], 1));
+        labels_new = arma::join_cols(labels_new, arma::repmat(labels.row(r), importance[stateIndex], 1)); 
+    }
+    return std::make_pair(data_new, labels_new);
+}
+
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map_submdp, std::vector<int> imps){
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
     arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
-    return std::make_pair(all_pairs, labels);
+    return repeatDataLabels(all_pairs, labels, imps);
 }

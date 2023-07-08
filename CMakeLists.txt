@@ -10,16 +10,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # search for Storm library
 find_package(storm REQUIRED)
 
-# specify source files
-set(SOURCE_FILES src/main.cpp src/genTrainData.cpp src/buildModel.cpp src/impCalc.cpp )#src/utils.hpp)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-# set executable
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-# Set include directories and dependencies
-target_include_directories(${PROJECT_NAME} PUBLIC ${SOURCE_FILES} ${storm_INCLUDE_DIR} ${storm-parsers_INCLUDE_DIR} ${storm-permissive_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE storm storm-parsers storm-permissive)
+add_subdirectory(src)
+add_subdirectory(app)
+add_subdirectory(tests)
+
+enable_testing()
+
 # Note that other libraries/includes from Storm might need to be added depending on the used functionality.
 # For example, to enable counterexamples, include directory ${storm-counterexamples_INCLUDE_DIR} and link library storm-counterexamples need to be added.
+

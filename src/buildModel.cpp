@@ -14,7 +14,7 @@
 #include <storm/models/sparse/Mdp.h>
 #include <storm/modelchecker/prctl/SparseMdpPrctlModelChecker.h>
 #include <bits/stdc++.h>
-#include "main.h"
+//#include "main.h"
 #include "buildModel.h"
 #include <iostream>
 
