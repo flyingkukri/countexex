@@ -1,3 +1,6 @@
 [submodule "mlpack"]
 	path = mlpack
 	url = git@github.com:mlpack/mlpack.git
+[submodule "lib/Catch2"]
+	path = lib/Catch2
+	url = git@github.com:catchorg/Catch2.git
