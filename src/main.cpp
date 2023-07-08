@@ -81,7 +81,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // TODO: currently works only for pathToModel = examples/die_c1.nm
     //  Properties should be in propertyString in the future: lines below just for quick testing
 
-    std::string label = "one";
+    std::string label = "goal";
     std::string formulasString = "Pmax=? [ F \"" + label + " \"];";
 
     // Setup: Build model, environment and check tasks
@@ -141,15 +141,19 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // TODO 3. Create training data
     // TODO Repeat the samples importance times
 
-    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
-    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
+//    auto impsOnes = std::vector<int>(impsSize, 1);
+    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp, imps);
+    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, imps);
+    std::cout << "created value map" << std::endl;
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+    std::cout << "created matrices" << std::endl;
 
-    arma::cout << "All state-action pairs: " << all_pairs << arma::endl;
-    arma::cout << "State-action pairs of the strategy: " << strategy_pairs << arma::endl;
+   // arma::cout << "All state-action pairs: " << all_pairs << arma::endl;
+   // arma::cout << "State-action pairs of the strategy: " << strategy_pairs << arma::endl;
 
     std::pair<arma::mat, arma::Row<size_t>> result = createTrainingData(value_map, value_map_submdp);
+    std::cout << "Created training data" << std::endl;
     all_pairs = result.first;
     auto labels = result.second;
     std::cout << "Labels: " << labels << std::endl;
