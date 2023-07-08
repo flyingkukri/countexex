@@ -35,52 +35,11 @@
 #include <mlpack/core/data/save.hpp>
 #include <mlpack/methods/decision_tree/decision_tree.hpp>
 #include <armadillo>
-#include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
-//#include "impCalc.h"
+//#include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
+#include "impCalc.h"
 //#include "utils.h"
 
-int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator,
-                storm::models::sparse::Mdp<double> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates) {
-    uint64_t seed = random();
-    simulator.setSeed(seed);
-    int state = simulator.getCurrentState();
-    for (int i = 0; i < l; i++) {
-        if(finalStates.get(state)) {
-            return 1; // We assume that final states are sink states
-        }
-        if(model.isSinkState(state)) {
-            break;
-        }
-        state = simulator.getCurrentState();
-        visited[state] = 1;
-        simulator.randomStep();
-    }
-    simulator.resetToInitial();
-    return 0;
-}
-
-std::vector<int> calculateImps(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator,
-                               storm::models::sparse::Mdp<double> model, int l, int C, const std::string& label) {
-    int nstates = model.getNumberOfStates();
-    std::vector<int> imps(nstates, 0);
-    std::vector<int> visited(nstates, 0);
-    std::cout << "nstates: " << nstates << std::endl;
-    storm::storage::BitVector finalStates = model.getStates(label);
-
-    for (int i = 0; i < C; i++) {
-        // simulateRun returns 1 if we are in a final state
-        if(simulateRun(simulator, model, visited, l, finalStates)){
-            for (int j = 0; j < nstates; j++) {
-                assert(visited[j] == 0 || visited[j] == 1);
-                imps[j] += visited[j];
-                visited[j] = 0;
-            }
-        }
-    }
-
-    return imps;
-}
-
+/*
 int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ostream& output, size_t nodeIndex) {
     // Print this node.
     output << "node" << nodeIndex << " [label=\"";
@@ -114,7 +73,7 @@ void printTreeToDot(mlpack::DecisionTree<>& dt, std::ostream& output) {
     printTreeToDotHelp(dt, output, 0);
     output << "}\n";
 }
-
+*/
 
 bool pipeline(std::string const& pathToModel, config  const& conf, std::string const& propertyString = "") {
 
@@ -170,15 +129,14 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     l = conf.l;
     C = conf.C;
 
-    storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(submdp);
-    std::vector<int> imps = calculateImps(simulator, submdp, l, C, label);
+//    storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(submdp);
+    std::vector<int> imps = calculateImps(submdp, l, C, label);
     size_t impsSize = submdp.getNumberOfStates();
 
     std::cout << "imps: " << std::endl;
     for(int imp: imps) {
         std::cout << imp << std::endl;
     }
-
     // TODO 3. Create training data
     // TODO Repeat the samples importance times
 
@@ -210,7 +168,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // Visualize the tree
     std::ofstream file;
     file.open ("graph.dot");
-    printTreeToDot(dt, file);
+//    printTreeToDot(dt, file);
     file.close();
 
     return true;

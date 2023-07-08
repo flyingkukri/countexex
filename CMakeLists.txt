@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(storm REQUIRED)
 
 # specify source files
-set(SOURCE_FILES src/main.cpp src/genTrainData.cpp src/buildModel.cpp)# src/impCalc.cpp )#src/utils.hpp)
+set(SOURCE_FILES src/main.cpp src/genTrainData.cpp src/buildModel.cpp src/impCalc.cpp )#src/utils.hpp)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
