@@ -54,13 +54,6 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
     return result;
 }
 
-template <typename MdpType>
-void modelVis(std::shared_ptr<MdpType>& model){
-    model->printModelInformationToStream(std::cout);
-    auto trans_M = model->getTransitionMatrix();
-    trans_M.printAsMatlabMatrix(std::cout);
-}
-
 storm::Environment setUpEnv(){
     // Set up environment: solver method and precision
     storm::Environment env;
