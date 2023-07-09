@@ -32,9 +32,23 @@
 *.app
 
 # Build directories
+CMakeFiles/
 build/
 graph.dot
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/settings.json
 .vscode/tasks.json
+app/Makefile
+Makefile
+tests/CTestTestfile.cmake
+.gitignore
+tests/tests_include-b12d07c.cmake
+.gitignore
+
+deps/
+cmake_install.cmake
+CMakeCache.txt
+CTestTestfile.cmake
+DartConfiguration.tcl
+CMake/mlpack.pc.in.partial

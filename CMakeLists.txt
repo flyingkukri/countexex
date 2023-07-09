@@ -12,10 +12,48 @@ find_package(storm REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
+#get_deps(http://mlpack.org/files/stb.tar.gz stb stb.tar.gz)
+#set(STB_IMAGE_INCLUDE_DIR ${GENERIC_INCLUDE_DIR})
+#find_package(StbImage REQUIRED)
+
+
+
+#add_subdirectory(mlpack)
+#include_directories(${MLPACK_INCLUDE_DIR})
+
+# include the ExternalProject module
+include(ExternalProject)
+
+# set the install location
+set(mlpack_INSTALL_DIR ${CMAKE_BINARY_DIR}/mlpack_install)
+
+# add mlpack as an external project
+ExternalProject_Add(mlpack_external
+  PREFIX            ${CMAKE_BINARY_DIR}/mlpack
+  GIT_REPOSITORY    https://github.com/mlpack/mlpack.git
+  GIT_TAG           master
+  CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${mlpack_INSTALL_DIR}
+  INSTALL_DIR       ${mlpack_INSTALL_DIR}
+  BUILD_BYPRODUCTS  ${mlpack_INSTALL_DIR}/lib/libmlpack.so
+)
+
+#ExternalProject_Add(storm_external
+#  PREFIX            ${CMAKE_BINARY_DIR}/mlpack
+#  GIT_REPOSITORY    https://github.com/mlpack/mlpack.git
+#  GIT_TAG           master
+#  CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${mlpack_INSTALL_DIR}
+#  INSTALL_DIR       ${mlpack_INSTALL_DIR}
+#  BUILD_BYPRODUCTS  ${mlpack_INSTALL_DIR}/lib/libmlpack.so
+#)
+
+set(MLPACK_INCLUDE_DIR ${mlpack_INSTALL_DIR}/include)
 
 add_subdirectory(src)
 add_subdirectory(app)
 add_subdirectory(tests)
+
+## find and link mlpack
+#find_package(mlpack REQUIRED)
 
 enable_testing()
 

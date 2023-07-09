@@ -4,7 +4,9 @@ lorem ipsum
 ### Dependencies
 - Storm (https://www.stormchecker.org/documentation/obtain-storm/build.html)
 - mklearn (on fedora mklearn-devel)
-### Compiling
+### Cloning and Compiling
+    # because we have submodules 
+    git clone git@github.com:flyingkukri/stormdt.git --recursive
     mkdir build
     cd build
     cmake ..
