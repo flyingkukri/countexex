@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # search for Storm library
-find_package(storm REQUIRED)
+# find_package(storm REQUIRED)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
@@ -48,15 +48,19 @@ ExternalProject_Add(mlpack_external
 
 set(MLPACK_INCLUDE_DIR ${mlpack_INSTALL_DIR}/include)
 
+add_subdirectory(storm)
+
+if (NOT TARGET storm)
+  message(FATAL_ERROR "storm not found")
+endif()
+
+set(storm_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include/")
+message("storm include dir: ${storm_INCLUDE_DIR}")
+
 add_subdirectory(src)
 add_subdirectory(app)
 add_subdirectory(tests)
 
-## find and link mlpack
-#find_package(mlpack REQUIRED)
 
 enable_testing()
-
-# Note that other libraries/includes from Storm might need to be added depending on the used functionality.
-# For example, to enable counterexamples, include directory ${storm-counterexamples_INCLUDE_DIR} and link library storm-counterexamples need to be added.
 

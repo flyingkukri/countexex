@@ -52,3 +52,4 @@ CMakeCache.txt
 CTestTestfile.cmake
 DartConfiguration.tcl
 CMake/mlpack.pc.in.partial
+CPackConfig.cmake

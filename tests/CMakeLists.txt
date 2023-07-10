@@ -15,13 +15,14 @@
 
 add_subdirectory(lib/Catch2)
 
-add_executable(tests
+add_executable(testscountex
         genTrainDataTest.cpp
         ${PROJECT_SOURCE_DIR}/src/genTrainData.cpp
         )
     
-target_link_libraries(tests PRIVATE storm Catch2::Catch2WithMain libmain)
+target_include_directories(testscountex PRIVATE ${storm_INCLUDE_DIR})
+target_link_libraries(testscountex PRIVATE storm Catch2::Catch2WithMain libmain)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(tests)
+catch_discover_tests(testscountex)
