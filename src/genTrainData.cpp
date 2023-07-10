@@ -69,10 +69,12 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     // TODO foreach loop
     for(int r = 0; r < data.n_rows; r++ ) {
         // Our stateIndex is the first column.
-        int stateIndex = data[r, 1]; 
+        int stateIndex = data.at(r, 0); 
         // Repeat the s-a pair as often as the importance of the state
-        data_new = arma::join_cols(data_new, arma::repmat(data.row(r), importance[stateIndex], 1));
-        labels_new = arma::join_cols(labels_new, arma::repmat(labels.row(r), importance[stateIndex], 1)); 
+        arma::mat addToMat = arma::repmat(data.row(r), importance[stateIndex], 1);
+        auto addToVec = arma::repmat(labels.col(r), 1, importance[stateIndex]); 
+        data_new = arma::join_cols(data_new, addToMat);
+        labels_new = arma::join_rows(labels_new, addToVec);
     }
     return std::make_pair(data_new, labels_new);
 }
