@@ -34,7 +34,11 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
  * Visualize a model: state & choice labels, transition matrix ...
  */
 template <typename MdpType>
-void modelVis(std::shared_ptr<MdpType>& model);
+void modelVis(std::shared_ptr<MdpType>& model){
+    model->printModelInformationToStream(std::cout);
+    auto trans_M = model->getTransitionMatrix();
+    trans_M.printAsMatlabMatrix(std::cout);
+}
 
 /*!
  * Set up the environment for the model checking
