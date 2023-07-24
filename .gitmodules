@@ -1,9 +1,6 @@
-[submodule "mlpack"]
-	path = mlpack
-	url = git@github.com:mlpack/mlpack.git
 [submodule "tests/lib/Catch2"]
 	path = tests/lib/Catch2
 	url = git@github.com:catchorg/Catch2.git
 [submodule "storm"]
 	path = storm
-	url = git@github.com:moves-rwth/storm.git
+	url = git@github.com:flyingkukri/storm.git
