@@ -6,7 +6,7 @@ lorem ipsum
 - mklearn (on fedora mklearn-devel)
 ### Cloning and Compiling
     # because we have submodules 
-    git clone git@github.com:flyingkukri/stormdt.git --recursive
+    git clone git@github.com:flyingkukri/countexex.git --recursive
     mkdir build
     cd build
     cmake ..
