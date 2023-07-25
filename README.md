@@ -45,25 +45,25 @@ Due to the size of the project the compilation time is long. For a speedup use
 ```bash
 make -j${NUMBER_OF_CORES}
 ```
-if you have multiple cores and at least ***8GB*** of memory.
+if you have multiple cores and at least **8GB** of memory.
 ### Common installation issues
 
 ## Running
-The executable countexex is located in ***/countexex/build/app/***
+The executable countexex is located in **/countexex/build/app/**
 Run the following command:
 ```bash
 $ countexex model.nm property.pctl
 ```
 ### Model requirements
 - Supply a model at the end of which the label goal is given to the states F, e.g.
-    label ***"goal" = s=1|s=2;***
+    label **"goal" = s=1|s=2;**
 - All final states are sink states
 
 
 ### Command Line Interface
 ### Configurable options
 ## Reading the output
-The decision tree is stored in the ... folder as a ***DOT file*** and can be converted to a pdf via the command 
+The decision tree is stored in the ... folder as a **DOT file** and can be converted to a pdf via the command 
 ```bash
 $ dot -Tpdf default.dot -o default.pdf
 ```
