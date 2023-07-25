@@ -1,12 +1,12 @@
 # Counterexample explanation in MDPs using Storm - User Manual
 This guide provides an overview on how to get started with countexex.
-Further information on how to customize and extend countexex can be found in the [Developer manual](doc/develop.md)
+Further information on how to customize and extend countexex can be found in the [Developer manual](doc/develop.md).
 
 ## Capabilities - What is countexex?
 Counterexample Explanation (Countexex) is a tool that allows comprehensive representations of strategies using decision trees.
-Assume we are given a probabilistic and non-deterministic sytem, modeled as Markov Decision Process (MDP), and a property to be checked via a model checker such as [Storm](https://www.stormchecker.org/index.html). In order to resolve the non-determinism we need strategies that indicate which action(s) to take in each state. The strategy might act as a counterexample, providing information on how to reach an error state, or could be a synthesized strategy. Due to the nature of the system (probabilistic AND non-deterministic) those strategies easily grow very large and incomprehensible. Countexex implements the approach proposed in [Counterexample Explanation by Learning Small Strategies in Markov Decision Processes](https://link.springer.com/chapter/10.1007/978-3-319-21690-4_10) to reduce the size of such strategies and provide a understandable representation using decision tree learning. The approach is threefold:
+Assume you are given a probabilistic and non-deterministic sytem, modeled as Markov Decision Process (MDP), and a property to be checked via a model checker such as [Storm](https://www.stormchecker.org/index.html). In order to resolve the non-determinism we need strategies that indicate which action(s) to take in each state. The strategy might act as a counterexample, providing information on how to reach an error state, or could be a synthesized strategy. Due to the nature of the system (probabilistic AND non-deterministic) those strategies easily grow very large and incomprehensible. Countexex implements the approach proposed in [Counterexample Explanation by Learning Small Strategies in Markov Decision Processes](https://link.springer.com/chapter/10.1007/978-3-319-21690-4_10) to reduce the size of such strategies and provide a understandable representation using decision tree learning. The approach is threefold:
 
-1. Compute liberal, &epsilon;-optimal strategy:
+1. Compute liberal, &epsilon;-optimal strategy
 2. Compute importance of states
 3. Learn a decision tree representation of the strategy 
     
@@ -19,9 +19,10 @@ As countexex is based on the model checker storm, the support is limited to the 
 * Ubuntu 20.04 and higher
 * Arch Linux 
 
-For updates see: [Storm](https://www.stormchecker.org/documentation/obtain-storm/build.html)
-We have tested the installation on Ubuntu Linux and ....
+For updates see: [Storm](https://www.stormchecker.org/documentation/obtain-storm/build.html).
 
+We have tested the installation on Ubuntu Linux and ....
+Due to the size of the system ... certain requirements for running? 
 ## Building
 ### Dependencies
 - [Storm dependencies](https://www.stormchecker.org/documentation/obtain-storm/dependencies.html#general-dependencies)
@@ -39,6 +40,11 @@ $ cd build
 $ cmake ..
 $ make
 ```
+Due to the size of the project the compilation time is long. For a speedup use 
+```bash
+make -j${NUMBER_OF_CORES}
+```
+if you have multiple cores and at least 8GB of memory.
 ### Common installation issues
 
 ## Running
@@ -56,9 +62,10 @@ $ countexex model.nm property.pctl
 ### Command Line Interface
 ### Configurable options
 ## Reading the output
-The decision tree is stored in the ... folder as a DOT file and can be converted to a pdf via the command ```bash
+The decision tree is stored in the ... folder as a DOT file and can be converted to a pdf via the command 
+```bash
 $ dot -Tpdf default.dot -o default.pdf
 ```
 or visualized e.g. by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 ## Development
-Click [here](doc/develop.md) for information regarding our code structure
+Click [here](doc/develop.md) for information regarding our code structure.
