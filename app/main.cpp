@@ -59,14 +59,14 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     std::unique_ptr<storm::modelchecker::CheckResult> checkResult = checkerOriginalTask.check(env, tasks[0]);
     auto stateValueVector = checkResult->asExplicitQuantitativeCheckResult<double>().getValueVector();
 
-    // Generate safety property for permissive scheduler from initStateCheckResult:
-    auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
-    std::string safetyProp = generateSafetyProperty(formulasString, initStateCheckResult);
-//    std::cout << "Check result from Pmax=? [ F psi]: " << initStateCheckResult << std::endl;
-
     // Display deterministic scheduler
     storm::storage::Scheduler<double> const& scheduler = checkResult->asExplicitQuantitativeCheckResult<double>().getScheduler();
     scheduler.printToStream(std::cout, mdp);
+
+    // Generate safety property for permissive scheduler from initStateCheckResult:
+    auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
+    std::string safetyProp = generateSafetyProperty(formulasString, initStateCheckResult);
+    // std::cout << "Check result from Pmax=? [ F psi]: " << initStateCheckResult << std::endl;
 
     // Generate safety property model and formula
     auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
@@ -89,12 +89,11 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     auto quantitativeResult = result1->asExplicitQuantitativeCheckResult<double>();
     std::cout << "Check max result under permissive strategy: " << (quantitativeResult[0]) <<std::endl;
 
-    // TODO 2. Simulate c runs under scheduler to approximate importance
+    // Simulate C runs under scheduler to approximate importance of states
     int l, C;
     l = conf.l;
     C = conf.C;
 
-//    storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(submdp);
     std::vector<int> imps = calculateImps(submdp, l, C, label);
     size_t impsSize = submdp.getNumberOfStates();
 
@@ -102,10 +101,9 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     for(int imp: imps) {
         std::cout << imp << std::endl;
     }
-    // TODO 3. Create training data
-    // TODO Repeat the samples importance times
 
-//    auto impsOnes = std::vector<int>(impsSize, 1);
+    // Create training data: Repeat the samples importance times
+    // auto impsOnes = std::vector<int>(impsSize, 1);
     auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
     auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
     printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
@@ -125,9 +123,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     std::cout << "Labels: " << labels << std::endl;
 
 
-    // TODO 4. DT learning:
-    //  1. Visualize DT
-    //  2. Hyperparameter tuning
+    // DT learning:
 
     mlpack::DecisionTree<> dt(all_pairs,labels,2, 1, 1e-7, 10);
 

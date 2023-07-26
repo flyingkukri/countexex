@@ -65,7 +65,7 @@ countexex model.nm property.pctl
 ## Reading the output
 The decision tree is stored at **/countexex/build/app/graph.dot** as a **DOT file** and can be converted to a pdf via the command 
 ```bash
-dot -Tpdf default.dot -o default.pdf
+dot -Tpdf graph.dot -o graph.pdf
 ```
 or visualized e.g. by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 ## Development
