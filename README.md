@@ -34,12 +34,12 @@ Due to the size of the system ... certain requirements for running?
 
 ### Cloning and Compiling
 ```bash
-$ # Use --recursive to clone the submodules; ssh required
-$ git clone git@github.com:flyingkukri/countexex.git --recursive
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
+# Use --recursive to clone the submodules; ssh required
+git clone git@github.com:flyingkukri/countexex.git --recursive
+mkdir build
+cd build
+cmake ..
+make
 ```
 Due to the size of the project the compilation time is long. For a speedup use 
 ```bash
@@ -52,7 +52,7 @@ if you have multiple cores and at least **8GB** of memory.
 The executable countexex is located in **/countexex/build/app/**
 Run the following command:
 ```bash
-$ countexex model.nm property.pctl
+countexex model.nm property.pctl
 ```
 ### Model requirements
 - Supply a model at the end of which the label goal is given to the states F, e.g.
@@ -65,7 +65,7 @@ $ countexex model.nm property.pctl
 ## Reading the output
 The decision tree is stored in the ... folder as a **DOT file** and can be converted to a pdf via the command 
 ```bash
-$ dot -Tpdf default.dot -o default.pdf
+dot -Tpdf default.dot -o default.pdf
 ```
 or visualized e.g. by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 ## Development
