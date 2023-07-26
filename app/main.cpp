@@ -90,11 +90,12 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     std::cout << "Check max result under permissive strategy: " << (quantitativeResult[0]) <<std::endl;
 
     // Simulate C runs under scheduler to approximate importance of states
-    int l, C;
+    int l, C, delta;
     l = conf.l;
     C = conf.C;
+    delta = C*conf.delta;
 
-    std::vector<int> imps = calculateImps(submdp, l, C, label);
+    std::vector<int> imps = calculateImps(submdp, l, C, delta, label);
     size_t impsSize = submdp.getNumberOfStates();
 
     std::cout << "imps: " << std::endl;

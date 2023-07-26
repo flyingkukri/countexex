@@ -15,6 +15,7 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
                 storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates) {
     uint64_t seed = random();
     simulator.setSeed(seed);
+    // Reset the visited vector to zero before each simulation
     std::fill(visited.begin(), visited.end(), 0);
     int state = simulator.getCurrentState();
     for (int i = 0; i < l; i++) {
@@ -32,7 +33,7 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
     return 0;
 }
 
-std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, int l, int C, const std::string& label) {
+std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, int l, int C, int delta, const std::string& label) {
     storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(model);
     int nstates = model.getNumberOfStates();
     std::vector<int> imps(nstates, 0);
@@ -41,13 +42,23 @@ std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models:
     storm::storage::BitVector finalStates = model.getStates(label);
 
     for (int i = 0; i < C; i++) {
-        // simulateRun returns 1 if we are in a final state
-        if(simulateRun(simulator, model, visited, l, finalStates)){
-            for (int j = 0; j < nstates; j++) {
-                assert(visited[j] == 0 || visited[j] == 1);
-                imps[j] += visited[j];
-                visited[j] = 0;
-            }
+        // simulateRun returns 1 if we are in a final state - we loop until it returns 1 to get in total C simulations reaching the target
+        int result = 0;
+        do { 
+            result = simulateRun(simulator, model, visited, l, finalStates);
+        } while(!result);
+        
+        for (int j = 0; j < nstates; j++) {
+            assert(visited[j] == 0 || visited[j] == 1);
+            imps[j] += visited[j];
+            visited[j] = 0;
+        }
+    }
+
+    // Set the importance of a state to zero if it is below the threshold delta
+    for (int& value : imps) {
+        if (value < delta) {
+            value = 0;
         }
     }
 
