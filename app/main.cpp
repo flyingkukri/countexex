@@ -38,43 +38,7 @@
 #include <armadillo>
 //#include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
 #include "impCalc.h"
-//#include "utils.h"
-
-/*
-int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ostream& output, size_t nodeIndex) {
-    // Print this node.
-    output << "node" << nodeIndex << " [label=\"";
-    // This is a leaf node.
-    if (dt.NumChildren() == 0){
-
-        // In this case classProbabilities will hold the information for the
-        // probabilites if each class.
-        auto probs = dt.getClassProbabilities();
-        int maxClass = probs.index_max();
-        output << "Leaf\nLabel: " << maxClass << "\\n";
-
-    } else {
-        // This is a splitting node.
-        output << "Split\nFeature: " << dt.SplitDimension() << "\\n";
-        // If the node isn't a leaf, getClassProbabilities() returns the splitinfo
-        output << "Threshold: " << dt.getClassProbabilities() << "\\n";
-    }
-    output << "\"];\n";
-    // Recurse to children.
-    int highestIndex = nodeIndex;
-    for (size_t i = 0; i < dt.NumChildren(); ++i)
-    {
-        output << "node" << nodeIndex << " -> node" << (highestIndex + 1) << ";\n";
-        highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1);
-    }
-    return highestIndex;
-}
-void printTreeToDot(mlpack::DecisionTree<>& dt, std::ostream& output) {
-    output << "digraph G {\n";
-    printTreeToDotHelp(dt, output, 0);
-    output << "}\n";
-}
-*/
+#include "utils.h"
 
 bool pipeline(std::string const& pathToModel, config  const& conf, std::string const& propertyString = "") {
 
@@ -142,15 +106,17 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // TODO Repeat the samples importance times
 
 //    auto impsOnes = std::vector<int>(impsSize, 1);
-    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp, imps);
-    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, imps);
+    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
+    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
+    printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
+    printStateActPairs<storm::models::sparse::Mdp<double>>(submdp_ptr);
     std::cout << "created value map" << std::endl;
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
     std::cout << "created matrices" << std::endl;
 
-   // arma::cout << "All state-action pairs: " << all_pairs << arma::endl;
-   // arma::cout << "State-action pairs of the strategy: " << strategy_pairs << arma::endl;
+   arma::cout << "All state-action pairs: " << all_pairs << arma::endl;
+   arma::cout << "State-action pairs of the strategy: " << strategy_pairs << arma::endl;
 
     std::pair<arma::mat, arma::Row<size_t>> result = createTrainingData(value_map, value_map_submdp, imps);
     std::cout << "Created training data" << std::endl;
@@ -174,7 +140,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // Visualize the tree
     std::ofstream file;
     file.open ("graph.dot");
-//    printTreeToDot(dt, file);
+    printTreeToDot(dt, file);
     file.close();
 
     return true;

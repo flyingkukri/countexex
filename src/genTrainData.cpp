@@ -83,5 +83,6 @@ std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string,
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
     arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
+    // return std::make_pair(all_pairs, labels);
     return repeatDataLabels(all_pairs, labels, imps);
 }
