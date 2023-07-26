@@ -15,6 +15,7 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
                 storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates) {
     uint64_t seed = random();
     simulator.setSeed(seed);
+    std::fill(visited.begin(), visited.end(), 0);
     int state = simulator.getCurrentState();
     for (int i = 0; i < l; i++) {
         if(finalStates.get(state)) {
