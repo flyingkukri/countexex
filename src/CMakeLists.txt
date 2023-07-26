@@ -1,4 +1,4 @@
-set(SOURCE_FILES genTrainData.cpp buildModel.cpp impCalc.cpp )#utils.hpp)
+set(SOURCE_FILES genTrainData.cpp buildModel.cpp impCalc.cpp utils.cpp)
 set(HEADER_FILES genTrainData.h buildModel.h impCalc.h utils.h)
 
 add_library(libmain ${SOURCE_FILES} ${HEADER_FILES})
