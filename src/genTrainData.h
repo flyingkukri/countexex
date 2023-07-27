@@ -109,10 +109,21 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vec
                 auto& vector = std::get<std::vector<int>>(it->second);
                 vector.push_back(actionIdentifier);
             }
+            // Create additional key-vector pair imps: to indicate for each s-a pair to which state id it belongs 
+            key = "imps";
+            it = value_map.find(key);
+            if( it == value_map.end()){
+                value_map.insert(std::make_pair(key, std::vector<int>{i}));
+            }else{
+                auto& vector = std::get<std::vector<int>>(it->second);
+                vector.push_back(i);
+            }
         }
     }
     return value_map;
 }
+
+void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector);
 
 arma::mat createMatrixFromValueMap(
         std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> &value_map);

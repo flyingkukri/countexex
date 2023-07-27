@@ -10,32 +10,45 @@
 #include <bits/stdc++.h>
 #include <iostream>
 
+void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector){
+    // Create an arma::rowvec from the vector
+    if (const auto intVector = std::get_if<std::vector<int>>(&valueVector)) {
+        rowVec = arma::conv_to<arma::rowvec>::from(*intVector);
+    } else if (const auto boolVector = std::get_if<std::vector<bool>>(&valueVector)) {
+        std::vector<int> boolToIntVector;
+        boolToIntVector.reserve(boolVector->size());
+        for (bool value : *boolVector) {
+            boolToIntVector.push_back(value ? 1 : 0);
+        }
+        rowVec = arma::conv_to<arma::rowvec>::from(boolToIntVector);
+    }
+    armaData = arma::join_vert(armaData, rowVec);
+}
+
 arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map){
     arma::mat armaData;
+    arma::rowvec rowVec;
+    std::string imps = "imps";
+    std::string act = "action";
+    // make sure imps is the first row in the matrix
+    auto it = value_map.find(imps);
+    std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector = it->second;
+    if(it!=value_map.end()){
+        createMatrixHelper(armaData,rowVec, valueVector);    
+    }
+    // make sure action is the second row in the matrix
+    it = value_map.find(act);
+    valueVector = it->second;
+    if(it!=value_map.end()){
+        createMatrixHelper(armaData,rowVec, valueVector);
+    }
+    // loop over all other key-value pairs
     for (const auto& pair : value_map) {
         // Get the vector corresponding to the key
-        const std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector = pair.second;
-
-        // Create an arma::rowvec from the vector
-        arma::rowvec rowVec;
-        if (const auto intVector = std::get_if<std::vector<int>>(&valueVector)) {
-            rowVec = arma::conv_to<arma::rowvec>::from(*intVector);
-        } else if (const auto boolVector = std::get_if<std::vector<bool>>(&valueVector)) {
-            std::vector<int> boolToIntVector;
-            boolToIntVector.reserve(boolVector->size());
-            for (bool value : *boolVector) {
-                boolToIntVector.push_back(value ? 1 : 0);
-            }
-            rowVec = arma::conv_to<arma::rowvec>::from(boolToIntVector);
-        } else if (const auto ratVector = std::get_if<std::vector<storm::RationalNumber>>(&valueVector)) {
-            // TODO: convert storm::RationalNumber to double
-            //            arma::rowvec rowVec(ratVector->size());
-            //            for (std::size_t i = 0; i < ratVector->size(); ++i) {
-            //                rowVec(i) = storm::utility::convertNumber<double>(ratVector[i]);
-            //            }
+        if(pair.first!="imps" && pair.first != "action"){
+            valueVector = pair.second;
+            createMatrixHelper(armaData,rowVec, valueVector);
         }
-        // Append the row vector to the matrix
-        armaData = arma::join_vert(armaData, rowVec);
     }
     return armaData;
 }
@@ -64,25 +77,27 @@ arma::Row<size_t> createDataLabels(arma::mat& allPairs, arma::mat& strategyPairs
 }
 
 std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance){
-    arma::mat data_new;
+    arma::mat data_new(data.n_rows, 0);
     arma::Row<size_t> labels_new;
     // TODO foreach loop
-    for(int r = 0; r < data.n_rows; r++ ) {
-        // Our stateIndex is the first column.
-        int stateIndex = data.at(r, 0); 
+    for(int c = 0; c < data.n_cols; c++ ) {
+        // Our stateIndex is the first row.
+        int stateIndex = data.at(0, c); 
         // Repeat the s-a pair as often as the importance of the state
-        arma::mat addToMat = arma::repmat(data.row(r), importance[stateIndex], 1);
-        auto addToVec = arma::repmat(labels.col(r), 1, importance[stateIndex]); 
-        data_new = arma::join_cols(data_new, addToMat);
-        labels_new = arma::join_rows(labels_new, addToVec);
+        arma::mat addToMat = arma::repmat(data.col(c), 1, importance[stateIndex]);
+        arma::Row<size_t> addToVec = arma::repmat(labels.col(c), 1, importance[stateIndex]); 
+        data_new = arma::join_horiz(data_new, addToMat);
+        labels_new = arma::join_horiz(labels_new, addToVec);
     }
-    return std::make_pair(data_new, labels_new);
+
+    // exclude the first row containing only stateIndex information
+    arma::mat trainData = data_new.submat(1, 0, data_new.n_rows-1, data_new.n_cols-1);
+    return std::make_pair(trainData, labels_new);
 }
 
 std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map_submdp, std::vector<int> imps){
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
     arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
-    // return std::make_pair(all_pairs, labels);
     return repeatDataLabels(all_pairs, labels, imps);
 }
