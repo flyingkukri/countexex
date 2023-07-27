@@ -55,9 +55,9 @@ void printStateActPairs(std::shared_ptr<MdpType>& mdp){
 }
 
 template <typename MdpType>
-std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> createStateActPairs(std::shared_ptr<MdpType>& mdp){
+std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createStateActPairs(std::shared_ptr<MdpType>& mdp){
     auto val = mdp->getStateValuations();
-    std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> value_map;
+    std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto choices = mdp->getNumberOfChoices(i);
@@ -84,16 +84,6 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vec
                     }else{
                         auto& vector = std::get<std::vector<int>>(it->second);
                         vector.push_back(varValue);                    }
-                }else if(varIt.getVariable().hasRationalType()){
-                    auto varValue = varIt.getRationalValue();
-                    if(it == value_map.end()){
-                        std::vector<storm::RationalNumber> rat_vector;
-                        rat_vector.push_back(varValue);
-                        value_map.insert(std::make_pair(key, rat_vector));
-                    }else{
-                        auto& vector = std::get<std::vector<storm::RationalNumber>>(it->second);
-                        vector.push_back(varValue);
-                    }
                 }
                 varIt.operator++();
             }
@@ -123,13 +113,13 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vec
     return value_map;
 }
 
-void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector);
+void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
 arma::mat createMatrixFromValueMap(
-        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>> &value_map);
+        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &value_map);
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& valueMapSubmdp, std::vector<int> importance);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMapSubmdp, std::vector<int> importance);
 
 std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance);

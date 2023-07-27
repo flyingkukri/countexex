@@ -10,7 +10,7 @@
 #include <bits/stdc++.h>
 #include <iostream>
 
-void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector){
+void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector){
     // Create an arma::rowvec from the vector
     if (const auto intVector = std::get_if<std::vector<int>>(&valueVector)) {
         rowVec = arma::conv_to<arma::rowvec>::from(*intVector);
@@ -25,14 +25,14 @@ void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<
     armaData = arma::join_vert(armaData, rowVec);
 }
 
-arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map){
+arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map){
     arma::mat armaData;
     arma::rowvec rowVec;
     std::string imps = "imps";
     std::string act = "action";
     // make sure imps is the first row in the matrix
     auto it = value_map.find(imps);
-    std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>& valueVector = it->second;
+    std::variant<std::vector<int>, std::vector<bool>>& valueVector = it->second;
     if(it!=value_map.end()){
         createMatrixHelper(armaData,rowVec, valueVector);    
     }
@@ -95,7 +95,7 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>, std::vector<storm::RationalNumber>>>& value_map_submdp, std::vector<int> imps){
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps){
     arma::mat all_pairs = createMatrixFromValueMap(value_map);
     auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
     arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
