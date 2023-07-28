@@ -55,7 +55,8 @@ void printStateActPairs(std::shared_ptr<MdpType>& mdp){
 }
 
 template <typename MdpType>
-std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createStateActPairs(std::shared_ptr<MdpType>& mdp){
+std::pair<std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>, std::map<int, std::string>> createStateActPairs(std::shared_ptr<MdpType>& mdp){
+    std::map<int, std::string> identifierActionMap;
     auto val = mdp->getStateValuations();
     std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
 
@@ -90,6 +91,7 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createS
             // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
             auto key = "action";
             auto actionIdentifier = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k);
+            // insert key to value_map
             auto it = value_map.find(key);
             if(it == value_map.end()){
                 std::vector<int> int_vector;
@@ -98,6 +100,11 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createS
             }else{
                 auto& vector = std::get<std::vector<int>>(it->second);
                 vector.push_back(actionIdentifier);
+            }
+            // insert actionIdentifer together with actionInfo to identifierActionMap
+            auto itIdent = identifierActionMap.find(actionIdentifier);
+            if(itIdent == identifierActionMap.end()){
+                identifierActionMap.insert(std::make_pair(actionIdentifier, mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k)));
             }
             // Create additional key-vector pair imps: to indicate for each s-a pair to which state id it belongs 
             key = "imps";
@@ -110,16 +117,16 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createS
             }
         }
     }
-    return value_map;
+    
+    return std::make_pair(value_map,identifierActionMap);
 }
 
 void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
-arma::mat createMatrixFromValueMap(
-        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &value_map);
+std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map);
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMapSubmdp, std::vector<int> importance);
+std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps);
 
 std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance);

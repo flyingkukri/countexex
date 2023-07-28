@@ -25,32 +25,43 @@ void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<
     armaData = arma::join_vert(armaData, rowVec);
 }
 
-arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map){
+std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map){
     arma::mat armaData;
     arma::rowvec rowVec;
     std::string imps = "imps";
     std::string act = "action";
+
+    // Every row of the resulting matrix corresponds to a feature
+    // Create a mapping between variable names and row numbers(==feature number)
+    std::map<int,std::string> featureMap;
+
     // make sure imps is the first row in the matrix
     auto it = value_map.find(imps);
     std::variant<std::vector<int>, std::vector<bool>>& valueVector = it->second;
     if(it!=value_map.end()){
         createMatrixHelper(armaData,rowVec, valueVector);    
-    }
+    } // no entry in featureMap for imps as this row will be removed from the matrix for training
+
     // make sure action is the second row in the matrix
     it = value_map.find(act);
     valueVector = it->second;
     if(it!=value_map.end()){
         createMatrixHelper(armaData,rowVec, valueVector);
     }
+    featureMap.insert(std::make_pair(0,act));
+    
+    auto featureIndex = 1;
     // loop over all other key-value pairs
     for (const auto& pair : value_map) {
         // Get the vector corresponding to the key
         if(pair.first!="imps" && pair.first != "action"){
             valueVector = pair.second;
             createMatrixHelper(armaData,rowVec, valueVector);
+            featureMap.insert(std::make_pair(featureIndex,pair.first));
+            featureIndex +=1;
         }
     }
-    return armaData;
+    return std::make_pair(armaData,featureMap);
 }
 
 arma::Row<size_t> createDataLabels(arma::mat& allPairs, arma::mat& strategyPairs){
@@ -95,9 +106,12 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps){
-    arma::mat all_pairs = createMatrixFromValueMap(value_map);
-    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
-    arma::Row<size_t> labels = createDataLabels(all_pairs, strategy_pairs);
-    return repeatDataLabels(all_pairs, labels, imps);
+std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps){
+    auto resAllValues = createMatrixFromValueMap(value_map);
+    arma::mat allPairsMat = resAllValues.first;
+    auto featureMap = resAllValues.second;
+    auto resStrategyValues = createMatrixFromValueMap(value_map_submdp);
+    arma::mat strategyPairsMat = resStrategyValues.first;
+    arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
+    return std::make_pair(repeatDataLabels(allPairsMat, labels, imps),featureMap);
 }

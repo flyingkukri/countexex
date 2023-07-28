@@ -103,31 +103,82 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
         std::cout << imp << std::endl;
     }
 
+    std::vector<int> myVector(13); // Create a vector with 13 elements
+
+    // Fill the vector with values from 0 to 12
+    for (int i = 0; i < 13; ++i) {
+        myVector[i] = 1;
+    }
+    // myVector[4]=3;
+    // myVector[10]=4;
+    // myVector[6]=1;
+    imps=myVector;
+
     // Create training data: Repeat the samples importance times
     // auto impsOnes = std::vector<int>(impsSize, 1);
-    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
-    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
+    auto resCreateStateActPairs = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
+    auto value_map = resCreateStateActPairs.first;
+    auto identifierActionMap = resCreateStateActPairs.second;
+    auto resCreateStateActPairsSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
+    auto value_map_submdp = resCreateStateActPairsSubmdp.first;
     printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
     printStateActPairs<storm::models::sparse::Mdp<double>>(submdp_ptr);
     std::cout << "created value map" << std::endl;
-    arma::mat all_pairs = createMatrixFromValueMap(value_map);
-    auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
-    std::cout << "created matrices" << std::endl;
+    // arma::mat all_pairs = createMatrixFromValueMap(value_map);
+    // auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
+    // std::cout << "created matrices" << std::endl;
+    // arma::cout << "All state-action pairs: \n" << all_pairs << arma::endl;
+    // arma::cout << "State-action pairs of the strategy: \n" << strategy_pairs << arma::endl;
 
-   arma::cout << "All state-action pairs: " << all_pairs << arma::endl;
-   arma::cout << "State-action pairs of the strategy: " << strategy_pairs << arma::endl;
-
-    std::pair<arma::mat, arma::Row<size_t>> result = createTrainingData(value_map, value_map_submdp, imps);
+    auto result = createTrainingData(value_map, value_map_submdp, imps);
     std::cout << "Created training data" << std::endl;
-    all_pairs = result.first;
-    auto labels = result.second;
-    std::cout << "Labels: " << labels << std::endl;
+    std::pair<arma::mat, arma::Row<size_t>> trainMatrix = result.first;
+    auto featureMap = result.second;
+    auto all_pairs = trainMatrix.first;
+    auto labels = trainMatrix.second;
+    std::cout << "Training data:\n " << all_pairs << std::endl;
+    std::cout << "Labels:\n " << labels << std::endl;
+
+    // arma::Row<size_t> myVector2(14);
+    // // std::vector<int> myVector2(14);
+    // for (int i = 0; i < 14; ++i) {
+    //     myVector2(i) = 1;
+    // }
+
+    // myVector2(0)=0;
+    // myVector2(8)=0;
+    // myVector2(9)=0;
+    // myVector2(10)=0;
+    // myVector2(11)=0;
+    // myVector2(12)=0;
+    // myVector2(13)=0;
+    // labels=myVector2;
 
 
     // DT learning:
 
-    mlpack::DecisionTree<> dt(all_pairs,labels,2, 1, 1e-7, 10);
+    // Create datasetInfo, containing information about the datatypes of rows 
+    mlpack::data::DatasetInfo datasetInfo;
 
+    // First row contains categorical feature
+    datasetInfo.Type(0) = mlpack::data::Datatype::categorical;
+    auto choiceIdent = mdp->getChoiceOrigins()->getNumberOfIdentifiers();
+    for(int i=0; i<choiceIdent;++i){
+        std::cout << "Map value according to key: " << i << " " << identifierActionMap[i] << std::endl;
+        datasetInfo.MapString<int>(identifierActionMap[i],0);
+    }
+    for(int i=0; i<choiceIdent;++i){
+        std::cout << "Map value according to datasetInfo mapping: " << i << " " << std::endl;
+        std::cout << datasetInfo.UnmapString(i,0) << std::endl;
+    }
+
+    // Remaining rows contain numeric feature
+    for(int i=1; i<all_pairs.n_rows; ++i){
+        datasetInfo.Type(i) = mlpack::data::Datatype::numeric;
+    }
+
+    mlpack::DecisionTree<> dt(all_pairs, datasetInfo, labels, 2, 1, 1e-7, 10);
+    // mlpack::DecisionTree<> dt(all_pairs, labels,2, 1, 1e-7, 10);
     arma::Row<size_t> testPredictions;
     dt.Classify(all_pairs, testPredictions);
     for (size_t pred: testPredictions) {
@@ -137,7 +188,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // Visualize the tree
     std::ofstream file;
     file.open ("graph.dot");
-    printTreeToDot(dt, file);
+    printTreeToDot(dt, file, featureMap, datasetInfo);
     file.close();
 
     return true;
