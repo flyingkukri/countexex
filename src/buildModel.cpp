@@ -74,7 +74,7 @@ std::string generateSafetyProperty(std::string const& formulasString, double ini
     return safetyProp;
 }
 
-std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, storm::logic::ProbabilityOperatorFormula> buildModelForSafetyProperty(std::string const& pathToModel, std::string& safetyProp){
+std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, storm::logic::ProbabilityOperatorFormula> buildModelForSafetyProperty(std::string const& pathToModel, std::string const& safetyProp){
     // Build new model with safety property
     auto program = storm::parser::PrismParser::parse(
             pathToModel);

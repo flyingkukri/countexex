@@ -32,6 +32,13 @@
 #include <memory>
 #include <variant>
 
+typedef struct {
+        std::map<int,std::string> featureMap; 
+        std::map<int, std::string> identifierActionMap;
+        std::vector<int> imps;
+        int numOfActId;
+} MdpInfo;
+
 template <typename MdpType>
 void printStateActPairs(std::shared_ptr<MdpType>& mdp){
     auto val = mdp->getStateValuations();
@@ -129,6 +136,6 @@ std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::ma
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps, uint_fast64_t numOfActId);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo);
 
-std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance);
+std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);

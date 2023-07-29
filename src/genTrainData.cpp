@@ -37,14 +37,12 @@ void categoricalFeatureOneHotEncoding(arma::mat& armaData, uint_fast64_t numOfAc
             // indicate for each row i that it represents an action feature
             featureMap.insert(std::make_pair(i,"action"));
         }
-        // std::cout << "ArmaData before:\n " << armaData << std::endl;
+
         // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
         // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
         for(int i=0;i<ncols;++i){
             // as we store the stateIndex in the first row temporarily we add +1 to access a row i logically 
             armaData.at((*intVector).at(i)+1,i)=1;
-            // auto tmp = (*intVector).at(i);
-            // std::cout << "ArmaData after round:\n " << i << " \n" << armaData << std::endl;
         }
     }
 }
@@ -84,6 +82,7 @@ std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::ma
             featureIndex +=1;
         }
     }
+    arma::sp_mat sparseMatrix = arma::sp_mat(armaData);
     return std::make_pair(armaData,featureMap);
 }
 
@@ -110,7 +109,7 @@ arma::Row<size_t> createDataLabels(arma::mat& allPairs, arma::mat& strategyPairs
     return labels;
 }
 
-std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance){
+std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo){
     arma::mat data_new(data.n_rows, 0);
     arma::Row<size_t> labels_new;
     // TODO foreach loop
@@ -118,8 +117,8 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
         // Our stateIndex is the first row.
         int stateIndex = data.at(0, c); 
         // Repeat the s-a pair as often as the importance of the state
-        arma::mat addToMat = arma::repmat(data.col(c), 1, importance[stateIndex]);
-        arma::Row<size_t> addToVec = arma::repmat(labels.col(c), 1, importance[stateIndex]); 
+        arma::mat addToMat = arma::repmat(data.col(c), 1, mdpInfo.imps[stateIndex]);
+        arma::Row<size_t> addToVec = arma::repmat(labels.col(c), 1, mdpInfo.imps[stateIndex]); 
         data_new = arma::join_horiz(data_new, addToMat);
         labels_new = arma::join_horiz(labels_new, addToVec);
     }
@@ -129,12 +128,12 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps, uint_fast64_t numOfActId){
-    auto resAllValues = createMatrixFromValueMap(value_map,numOfActId);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo){
+    auto resAllValues = createMatrixFromValueMap(value_map, mdpInfo.numOfActId);
     arma::mat allPairsMat = resAllValues.first;
-    auto featureMap = resAllValues.second;
-    auto resStrategyValues = createMatrixFromValueMap(value_map_submdp,numOfActId);
+    mdpInfo.featureMap = resAllValues.second;
+    auto resStrategyValues = createMatrixFromValueMap(value_map_submdp, mdpInfo.numOfActId);
     arma::mat strategyPairsMat = resStrategyValues.first;
     arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
-    return std::make_pair(repeatDataLabels(allPairsMat, labels, imps),featureMap);
+    return repeatDataLabels(allPairsMat, labels, mdpInfo);
 }
