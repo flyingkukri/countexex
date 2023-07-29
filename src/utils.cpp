@@ -1,7 +1,9 @@
 #include "utils.h"
 #include <armadillo>
+#include <iostream>
+#include <cmath>
 
-int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, size_t nodeIndex, std::map<int,std::string>& featureMap, mlpack::data::DatasetInfo& datasetInfo) {
+int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, size_t nodeIndex, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId) {
     // Print this node.
     output << "node" << nodeIndex << " [label=\"";
     // This is a leaf node.
@@ -16,15 +18,12 @@ int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinary
         auto featureNumber = dt.SplitDimension();        
         auto it = featureMap.find(featureNumber);
         if( it != featureMap.end()){
+            // Get the feature variable 
             output << it->second;
-            if(featureNumber==0){ // categorical feature
-                auto tmp = dt.ClassProbabilities().at(0);
-                for(auto i : dt.ClassProbabilities()){
-                    std::cout << "Print value of ClassProbs: " << std::endl;
-                    std::cout << i << std::endl;
-                }
-                // output << " = [" << dt.ClassProbabilities() << "]";
-                output << " = [" << datasetInfo.UnmapString(static_cast<int>(tmp),featureNumber) << "]";   
+            if(featureNumber<numOfActId){ // categorical feature
+                // Get action represented by featureNumber due to one-hot-encoding
+                auto act = datasetInfo[featureNumber];
+                output << " = [" << act << "]";
             }else{ // numeric feature
                 // TODO: how do we know the operator: <=, <, >=?
                 output << " <=" << dt.ClassProbabilities();
@@ -38,13 +37,13 @@ int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinary
     for (size_t i = 0; i < dt.NumChildren(); ++i)
     {
         output << "node" << nodeIndex << " -> node" << (highestIndex + 1) << ";\n";
-        highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1, featureMap, datasetInfo);
+        highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1, featureMap, datasetInfo, numOfActId);
     }
     return highestIndex;
 }
 
-void printTreeToDot(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, std::map<int,std::string>& featureMap, mlpack::data::DatasetInfo& datasetInfo) {
+void printTreeToDot(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId) {
     output << "digraph G {\n";
-    printTreeToDotHelp(dt, output, 0, featureMap, datasetInfo);
+    printTreeToDotHelp(dt, output, 0, featureMap, datasetInfo, numOfActId);
     output << "}\n";
 }

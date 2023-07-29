@@ -25,7 +25,31 @@ void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<
     armaData = arma::join_vert(armaData, rowVec);
 }
 
-std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map){
+
+void categoricalFeatureOneHotEncoding(arma::mat& armaData, uint_fast64_t numOfActId, std::map<int,std::string>& featureMap, std::variant<std::vector<int>, std::vector<bool>>& valueVector){
+    // We know that the variant holds an int vector in this case as it contains the action identifiers
+    if (const auto intVector = std::get_if<std::vector<int>>(&valueVector)) {
+        auto ncols = (*intVector).size();
+        // Create a feature row in the matrix for every actionIdentifier: e.g. if there are 10 different actions we add 10 feature rows to the matrix
+        for(int i=0; i<numOfActId; ++i){
+            arma::Row<double> rowVec = arma::zeros<arma::Row<double>>(ncols);
+            armaData = arma::join_vert(armaData, rowVec);
+            // indicate for each row i that it represents an action feature
+            featureMap.insert(std::make_pair(i,"action"));
+        }
+        // std::cout << "ArmaData before:\n " << armaData << std::endl;
+        // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
+        // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
+        for(int i=0;i<ncols;++i){
+            // as we store the stateIndex in the first row temporarily we add +1 to access a row i logically 
+            armaData.at((*intVector).at(i)+1,i)=1;
+            // auto tmp = (*intVector).at(i);
+            // std::cout << "ArmaData after round:\n " << i << " \n" << armaData << std::endl;
+        }
+    }
+}
+
+std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, uint_fast64_t numOfActId){
     arma::mat armaData;
     arma::rowvec rowVec;
     std::string imps = "imps";
@@ -42,15 +66,14 @@ std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::ma
         createMatrixHelper(armaData,rowVec, valueVector);    
     } // no entry in featureMap for imps as this row will be removed from the matrix for training
 
-    // make sure action is the second row in the matrix
+    // one-hot encoding for the categorical action features
     it = value_map.find(act);
     valueVector = it->second;
     if(it!=value_map.end()){
-        createMatrixHelper(armaData,rowVec, valueVector);
+        categoricalFeatureOneHotEncoding(armaData, numOfActId, featureMap, valueVector);
     }
-    featureMap.insert(std::make_pair(0,act));
     
-    auto featureIndex = 1;
+    auto featureIndex = numOfActId;
     // loop over all other key-value pairs
     for (const auto& pair : value_map) {
         // Get the vector corresponding to the key
@@ -106,11 +129,11 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps){
-    auto resAllValues = createMatrixFromValueMap(value_map);
+std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps, uint_fast64_t numOfActId){
+    auto resAllValues = createMatrixFromValueMap(value_map,numOfActId);
     arma::mat allPairsMat = resAllValues.first;
     auto featureMap = resAllValues.second;
-    auto resStrategyValues = createMatrixFromValueMap(value_map_submdp);
+    auto resStrategyValues = createMatrixFromValueMap(value_map_submdp,numOfActId);
     arma::mat strategyPairsMat = resStrategyValues.first;
     arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
     return std::make_pair(repeatDataLabels(allPairsMat, labels, imps),featureMap);
