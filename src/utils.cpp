@@ -3,9 +3,10 @@
 #include <iostream>
 #include <cmath>
 
-int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, size_t nodeIndex, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId) {
+int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t nodeIndex, const MdpInfo& mdpInfo) {
     // Print this node.
     output << "node" << nodeIndex << " [label=\"";
+    auto isCategorical = false;
     // This is a leaf node.
     if (dt.NumChildren() == 0){
         // In this case classProbabilities will hold the information for the
@@ -16,16 +17,20 @@ int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinary
     } else { // This is a splitting node.
         // If the node isn't a leaf, getClassProbabilities() returns the splitinfo
         auto featureNumber = dt.SplitDimension();        
-        auto it = featureMap.find(featureNumber);
-        if( it != featureMap.end()){
+        auto it = mdpInfo.featureMap.find(featureNumber);
+        if( it != mdpInfo.featureMap.end()){
             // Get the feature variable 
             output << it->second;
-            if(featureNumber<numOfActId){ // categorical feature
+            if(featureNumber<mdpInfo.numOfActId){ // categorical feature
                 // Get action represented by featureNumber due to one-hot-encoding
-                auto act = datasetInfo[featureNumber];
+                isCategorical = true;
+                auto it = mdpInfo.identifierActionMap.find(featureNumber);
+                std::string act = "";
+                if(it!=mdpInfo.identifierActionMap.end()){
+                    act = it->second;
+                }
                 output << " = [" << act << "]";
             }else{ // numeric feature
-                // TODO: how do we know the operator: <=, <, >=?
                 output << " <=" << dt.ClassProbabilities();
             }
         }
@@ -34,16 +39,35 @@ int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinary
     output << "\"];\n";
     // Recurse to children.
     int highestIndex = nodeIndex;
+    // We always have two childeren as we have only numeric data and therefore always perform the best_binary_numeric_split
+    // Child zero is the left child: indicating point <= splitInfo
     for (size_t i = 0; i < dt.NumChildren(); ++i)
     {
-        output << "node" << nodeIndex << " -> node" << (highestIndex + 1) << ";\n";
-        highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1, featureMap, datasetInfo, numOfActId);
+        output << "node" << nodeIndex << " -> node" << (highestIndex + 1);
+        if(i==0){
+            if(isCategorical && dt.ClassProbabilities()[0]<1){
+                // unsatisfied predicate: dashed line
+                output << "[style=dashed, arrowhead=none];\n";
+            }else{
+                // satisfied predicate
+                output << "[arrowhead=none];\n";
+            }
+        }else if(i==1){
+            if(isCategorical && dt.ClassProbabilities()[0]<1){
+                // satisfied predicate
+                output << "[arrowhead=none];\n";
+            }else{
+                // unsatisfied predicate: dashed line
+                output << "[style=dashed, arrowhead=none];\n";
+            }
+        }
+        highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1, mdpInfo);
     }
     return highestIndex;
 }
 
-void printTreeToDot(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId) {
+void printTreeToDot(mlpack::DecisionTree<>& dt, std::ofstream& output, const MdpInfo& mdpInfo) {
     output << "digraph G {\n";
-    printTreeToDotHelp(dt, output, 0, featureMap, datasetInfo, numOfActId);
+    printTreeToDotHelp(dt, output, 0, mdpInfo);
     output << "}\n";
 }

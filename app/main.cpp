@@ -36,7 +36,6 @@
 #include <mlpack/core/data/save.hpp>
 #include <mlpack/methods/decision_tree/decision_tree.hpp>
 #include <armadillo>
-//#include <storm/simulator/DiscreteTimeSparseModelSimulator.h>
 #include "impCalc.h"
 #include "utils.h"
 
@@ -95,16 +94,14 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     C = conf.C;
     delta = C*conf.delta;
 
-    std::vector<int> imps = calculateImps(submdp, l, C, delta, label);
-    size_t impsSize = submdp.getNumberOfStates();
-
+    MdpInfo mdpInfo;
+    mdpInfo.imps = calculateImps(submdp, l, C, delta, label);
     std::cout << "imps: " << std::endl;
-    for(int imp: imps) {
+    for(int imp: mdpInfo.imps) {
         std::cout << imp << std::endl;
     }
 
     std::vector<int> myVector(13); // Create a vector with 13 elements
-
     // Fill the vector with values from 0 to 12
     for (int i = 0; i < 13; ++i) {
         myVector[i] = 1;
@@ -112,18 +109,14 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // myVector[4]=3;
     // myVector[10]=4;
     // myVector[6]=1;
-    imps=myVector;
-
+    mdpInfo.imps=myVector;
+    
     // Create training data: Repeat the samples importance times
-    // auto impsOnes = std::vector<int>(impsSize, 1);
-    auto resCreateStateActPairs = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
-    auto value_map = resCreateStateActPairs.first;
-    auto identifierActionMap = resCreateStateActPairs.second;
-    auto numOfActId = mdp->getChoiceOrigins()->getNumberOfIdentifiers();
-    auto resCreateStateActPairsSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
-    auto value_map_submdp = resCreateStateActPairsSubmdp.first;
-    printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
-    printStateActPairs<storm::models::sparse::Mdp<double>>(submdp_ptr);
+    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp, mdpInfo);
+    mdpInfo.numOfActId = mdp->getChoiceOrigins()->getNumberOfIdentifiers();
+    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, mdpInfo);
+    // printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
+    // printStateActPairs<storm::models::sparse::Mdp<double>>(submdp_ptr);
     std::cout << "created value map" << std::endl;
     // arma::mat all_pairs = createMatrixFromValueMap(value_map);
     // auto strategy_pairs = createMatrixFromValueMap(value_map_submdp);
@@ -131,32 +124,31 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // arma::cout << "All state-action pairs: \n" << all_pairs << arma::endl;
     // arma::cout << "State-action pairs of the strategy: \n" << strategy_pairs << arma::endl;
 
-    auto result = createTrainingData(value_map, value_map_submdp, imps, numOfActId);
+    auto result = createTrainingData(value_map, value_map_submdp, mdpInfo);
     std::cout << "Created training data" << std::endl;
-    std::pair<arma::mat, arma::Row<size_t>> trainMatrix = result.first;
-    auto featureMap = result.second;
-    auto all_pairs = trainMatrix.first;
-    auto labels = trainMatrix.second;
+
+    auto all_pairs = result.first;
+    auto labels = result.second;
     std::cout << "Training data:\n " << all_pairs << std::endl;
     std::cout << "Labels:\n " << labels << std::endl;
 
-    arma::Row<size_t> myVector2(14);
-    // std::vector<int> myVector2(14);
-    for (int i = 0; i < 14; ++i) {
-        myVector2(i) = 1;
-    }
+    // arma::Row<size_t> myVector2(14);
+    // // std::vector<int> myVector2(14);
+    // for (int i = 0; i < 14; ++i) {
+    //     myVector2(i) = 1;
+    // }
 
-    myVector2(0)=0;
-    // myVector2(2)=0;
-    // myVector2(4)=0;
-    // myVector2(6)=0;
-    // myVector2(8)=0;
-    myVector2(9)=0;
-    myVector2(10)=0;
-    myVector2(11)=0;
-    myVector2(12)=0;
-    myVector2(13)=0;
-    labels=myVector2;
+    // myVector2(0)=0;
+    // // myVector2(2)=0;
+    // // myVector2(4)=0;
+    // // myVector2(6)=0;
+    // // myVector2(8)=0;
+    // myVector2(9)=0;
+    // myVector2(10)=0;
+    // myVector2(11)=0;
+    // myVector2(12)=0;
+    // myVector2(13)=0;
+    // labels=myVector2;
 
 
     // DT learning:
@@ -167,11 +159,11 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     for (size_t pred: testPredictions) {
         std::cout << pred << std::endl;
     }
-    
+
     // Visualize the tree
     std::ofstream file;
     file.open ("graph.dot");
-    printTreeToDot(dt, file, featureMap, identifierActionMap,numOfActId);
+    printTreeToDot(dt, file, mdpInfo);
     file.close();
 
     return true;

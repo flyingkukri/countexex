@@ -32,6 +32,13 @@
 #include <memory>
 #include <variant>
 
+typedef struct {
+        std::map<int,std::string> featureMap; 
+        std::map<int, std::string> identifierActionMap;
+        std::vector<int> imps;
+        int numOfActId;
+} MdpInfo;
+
 template <typename MdpType>
 void printStateActPairs(std::shared_ptr<MdpType>& mdp){
     auto val = mdp->getStateValuations();
@@ -55,8 +62,7 @@ void printStateActPairs(std::shared_ptr<MdpType>& mdp){
 }
 
 template <typename MdpType>
-std::pair<std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>, std::map<int, std::string>> createStateActPairs(std::shared_ptr<MdpType>& mdp){
-    std::map<int, std::string> identifierActionMap;
+std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
     auto val = mdp->getStateValuations();
     std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
 
@@ -84,7 +90,8 @@ std::pair<std::map<std::string, std::variant<std::vector<int>, std::vector<bool>
                         value_map.insert(std::make_pair(key, int_vector));
                     }else{
                         auto& vector = std::get<std::vector<int>>(it->second);
-                        vector.push_back(varValue);                    }
+                        vector.push_back(varValue);                    
+                    }
                 }
                 varIt.operator++();
             }
@@ -102,9 +109,9 @@ std::pair<std::map<std::string, std::variant<std::vector<int>, std::vector<bool>
                 vector.push_back(actionIdentifier);
             }
             // insert actionIdentifer together with actionInfo to identifierActionMap
-            auto itIdent = identifierActionMap.find(actionIdentifier);
-            if(itIdent == identifierActionMap.end()){
-                identifierActionMap.insert(std::make_pair(actionIdentifier, mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k)));
+            auto itIdent = mdpInfo.identifierActionMap.find(actionIdentifier);
+            if(itIdent == mdpInfo.identifierActionMap.end()){
+                mdpInfo.identifierActionMap.insert(std::make_pair(actionIdentifier, mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k)));
             }
             // Create additional key-vector pair imps: to indicate for each s-a pair to which state id it belongs 
             key = "imps";
@@ -118,17 +125,17 @@ std::pair<std::map<std::string, std::variant<std::vector<int>, std::vector<bool>
         }
     }
     
-    return std::make_pair(value_map,identifierActionMap);
+    return value_map;
 }
 
 void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
-void categoricalFeatureOneHotEncoding(arma::mat& armaData, uint_fast64_t numOfActId, std::map<int,std::string>& featureMap, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
+void categoricalFeatureOneHotEncoding(arma::mat& armaData, MdpInfo& mdpInfo, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
-std::pair<arma::mat, std::map<int,std::string>> createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, uint_fast64_t numOfActId);
+arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, MdpInfo& mdpInfo);
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<std::pair<arma::mat, arma::Row<size_t>>,std::map<int,std::string>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, std::vector<int> imps, uint_fast64_t numOfActId);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo);
 
-std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, std::vector<int> importance);
+std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);

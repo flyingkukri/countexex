@@ -6,6 +6,12 @@
 #include <mlpack/core/data/load.hpp>
 #include <mlpack/core/data/save.hpp>
 #include <mlpack/methods/decision_tree/decision_tree.hpp>
-int printTreeToDotHelp(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, size_t nodeIndex, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId);
-void printTreeToDot(mlpack::DecisionTree<mlpack::GiniGain, mlpack::BestBinaryNumericSplit, mlpack::AllCategoricalSplit, mlpack::AllDimensionSelect, false>& dt, std::ofstream& output, std::map<int,std::string>& featureMap, std::map<int, std::string> datasetInfo, int numOfActId);
+#include <string>
+#include <map>
+#include <vector>
+#include <memory>
+#include <variant>
+#include "genTrainData.h"
+int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t nodeIndex, const MdpInfo& mdpInfo);
+void printTreeToDot(mlpack::DecisionTree<>& dt, std::ofstream& output, const MdpInfo& mdpInfo);
     

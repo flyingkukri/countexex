@@ -48,4 +48,4 @@ storm::Environment setUpEnv();
 
 std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult);
 
-std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, storm::logic::ProbabilityOperatorFormula> buildModelForSafetyProperty(std::string const& pathToModel, std::string& safetyProp);
+std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, storm::logic::ProbabilityOperatorFormula> buildModelForSafetyProperty(std::string const& pathToModel, std::string const& safetyProp);
