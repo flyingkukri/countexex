@@ -1,18 +1,3 @@
-#
-#
-#include_directories(${PROJECT_SOURCE_DIR}/src)
-#
-## TODO make the non-main into a library
-#add_executable(libtest genTrainDataTest.cpp ${PROJECT_SOURCE_DIR}/src/train_data_generation/genTrainData.cpp)
-#
-#target_include_directories(libtest PUBLIC ${storm_INCLUDE_DIR})
-#target_link_libraries(libtest PRIVATE storm)
-#
-#
-#enable_testing()
-#add_test(NAME libtest
-#        COMMAND $<TARGET_FILE:libtest>)
-
 add_subdirectory(lib/Catch2)
 
 add_executable(testscountex
