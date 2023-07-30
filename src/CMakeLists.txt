@@ -1,5 +1,5 @@
-set(SOURCE_FILES genTrainData.cpp buildModel.cpp impCalc.cpp utils.cpp)
-set(HEADER_FILES genTrainData.h buildModel.h impCalc.h utils.h)
+set(SOURCE_FILES train_data_generation/genTrainData.cpp model_builder/buildModel.cpp importance_calculation/impCalc.cpp dtree_visualization/dtreeToDot.cpp)
+set(HEADER_FILES train_data_generation/genTrainData.h model_builder/buildModel.h importance_calculation/impCalc.h dtree_visualization/dtreeToDot.h)
 
 add_library(libmain ${SOURCE_FILES} ${HEADER_FILES})
 

@@ -37,7 +37,7 @@
 #include <mlpack/methods/decision_tree/decision_tree.hpp>
 #include <armadillo>
 #include "impCalc.h"
-#include "utils.h"
+#include "dtreeToDot.h"
 
 bool pipeline(std::string const& pathToModel, config  const& conf, std::string const& propertyString = "") {
 
@@ -153,7 +153,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
 
     // DT learning:
 
-    mlpack::DecisionTree<> dt(all_pairs, labels,2, 1, 1e-7, 3);
+    mlpack::DecisionTree<> dt(all_pairs, labels,2, 1, 1e-7, 100);
     arma::Row<size_t> testPredictions;
     dt.Classify(all_pairs, testPredictions);
     for (size_t pred: testPredictions) {

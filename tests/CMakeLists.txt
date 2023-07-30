@@ -3,7 +3,7 @@
 #include_directories(${PROJECT_SOURCE_DIR}/src)
 #
 ## TODO make the non-main into a library
-#add_executable(libtest genTrainDataTest.cpp ${PROJECT_SOURCE_DIR}/src/genTrainData.cpp)
+#add_executable(libtest genTrainDataTest.cpp ${PROJECT_SOURCE_DIR}/src/train_data_generation/genTrainData.cpp)
 #
 #target_include_directories(libtest PUBLIC ${storm_INCLUDE_DIR})
 #target_link_libraries(libtest PRIVATE storm)
@@ -17,10 +17,10 @@ add_subdirectory(lib/Catch2)
 
 add_executable(testscountex
         genTrainDataTest.cpp
-        ${PROJECT_SOURCE_DIR}/src/genTrainData.cpp
+        ${PROJECT_SOURCE_DIR}/src/train_data_generation/genTrainData.cpp
         )
     
-target_include_directories(testscountex PRIVATE ${storm_INCLUDE_DIR})
+target_include_directories(testscountex PRIVATE ${storm_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/src/train_data_generation)
 target_link_libraries(testscountex PRIVATE storm Catch2::Catch2WithMain libmain)
 
 include(CTest)
