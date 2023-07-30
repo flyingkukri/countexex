@@ -6,6 +6,7 @@
 int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t nodeIndex, const MdpInfo& mdpInfo) {
     // Print this node.
     output << "node" << nodeIndex << " [label=\"";
+    auto isCategorical = false;
     // This is a leaf node.
     if (dt.NumChildren() == 0){
         // In this case classProbabilities will hold the information for the
@@ -22,6 +23,7 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
             output << it->second;
             if(featureNumber<mdpInfo.numOfActId){ // categorical feature
                 // Get action represented by featureNumber due to one-hot-encoding
+                isCategorical = true;
                 auto it = mdpInfo.identifierActionMap.find(featureNumber);
                 std::string act = "";
                 if(it!=mdpInfo.identifierActionMap.end()){
@@ -29,7 +31,6 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
                 }
                 output << " = [" << act << "]";
             }else{ // numeric feature
-                // TODO: how do we know the operator: <=, <, >=?
                 output << " <=" << dt.ClassProbabilities();
             }
         }
@@ -38,9 +39,28 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
     output << "\"];\n";
     // Recurse to children.
     int highestIndex = nodeIndex;
+    // We always have two childeren as we have only numeric data and therefore always perform the best_binary_numeric_split
+    // Child zero is the left child: indicating point <= splitInfo
     for (size_t i = 0; i < dt.NumChildren(); ++i)
     {
-        output << "node" << nodeIndex << " -> node" << (highestIndex + 1) << ";\n";
+        output << "node" << nodeIndex << " -> node" << (highestIndex + 1);
+        if(i==0){
+            if(isCategorical && dt.ClassProbabilities()[0]<1){
+                // unsatisfied predicate: dashed line
+                output << "[style=dashed, arrowhead=none];\n";
+            }else{
+                // satisfied predicate
+                output << "[arrowhead=none];\n";
+            }
+        }else if(i==1){
+            if(isCategorical && dt.ClassProbabilities()[0]<1){
+                // satisfied predicate
+                output << "[arrowhead=none];\n";
+            }else{
+                // unsatisfied predicate: dashed line
+                output << "[style=dashed, arrowhead=none];\n";
+            }
+        }
         highestIndex = printTreeToDotHelp(dt.Child(i), output, highestIndex + 1, mdpInfo);
     }
     return highestIndex;
