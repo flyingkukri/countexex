@@ -112,14 +112,9 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     mdpInfo.imps=myVector;
     
     // Create training data: Repeat the samples importance times
-
-    
-    auto resCreateStateActPairs = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
-    auto value_map = resCreateStateActPairs.first;
-    mdpInfo.identifierActionMap = resCreateStateActPairs.second;
+    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp, mdpInfo);
     mdpInfo.numOfActId = mdp->getChoiceOrigins()->getNumberOfIdentifiers();
-    auto resCreateStateActPairsSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr);
-    auto value_map_submdp = resCreateStateActPairsSubmdp.first;
+    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, mdpInfo);
     // printStateActPairs<storm::models::sparse::Mdp<double>>(mdp);
     // printStateActPairs<storm::models::sparse::Mdp<double>>(submdp_ptr);
     std::cout << "created value map" << std::endl;
@@ -168,7 +163,7 @@ bool pipeline(std::string const& pathToModel, config  const& conf, std::string c
     // Visualize the tree
     std::ofstream file;
     file.open ("graph.dot");
-    printTreeToDot(dt, file, mdpInfo.featureMap, mdpInfo.identifierActionMap, mdpInfo.numOfActId);
+    printTreeToDot(dt, file, mdpInfo);
     file.close();
 
     return true;
