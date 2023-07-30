@@ -7,19 +7,7 @@ project(countexex VERSION 1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# search for Storm library
-# find_package(storm REQUIRED)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-#get_deps(http://mlpack.org/files/stb.tar.gz stb stb.tar.gz)
-#set(STB_IMAGE_INCLUDE_DIR ${GENERIC_INCLUDE_DIR})
-#find_package(StbImage REQUIRED)
-
-
-
-#add_subdirectory(mlpack)
-#include_directories(${MLPACK_INCLUDE_DIR})
 
 # include the ExternalProject module
 include(ExternalProject)
@@ -36,15 +24,6 @@ ExternalProject_Add(mlpack_external
   INSTALL_DIR       ${mlpack_INSTALL_DIR}
   BUILD_BYPRODUCTS  ${mlpack_INSTALL_DIR}/lib/libmlpack.so
 )
-
-#ExternalProject_Add(storm_external
-#  PREFIX            ${CMAKE_BINARY_DIR}/mlpack
-#  GIT_REPOSITORY    https://github.com/mlpack/mlpack.git
-#  GIT_TAG           master
-#  CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${mlpack_INSTALL_DIR}
-#  INSTALL_DIR       ${mlpack_INSTALL_DIR}
-#  BUILD_BYPRODUCTS  ${mlpack_INSTALL_DIR}/lib/libmlpack.so
-#)
 
 set(MLPACK_INCLUDE_DIR ${mlpack_INSTALL_DIR}/include)
 
