@@ -11,7 +11,7 @@
 #include <vector>
 #include <memory>
 #include <variant>
-#include "genTrainData.h"
+#include "../train_data_generation/genTrainData.h"
 int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t nodeIndex, const MdpInfo& mdpInfo);
 void printTreeToDot(mlpack::DecisionTree<>& dt, std::ofstream& output, const MdpInfo& mdpInfo);
     
