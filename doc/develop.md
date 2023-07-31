@@ -49,27 +49,62 @@ We will have repeated each state-action pair as often as indicated by the import
 As arma is column-major, mlpack treats each column as a data point and each row as a dimension.
 
 ### main.cpp
+The following flowchart gives a high-level overview of the pipeline process. We will further explain the individual steps in the following.
+```mermaid
+    flowchart TD
+        id1[set up mdp]
+        id2[calculate maximum possibility p of reaching goal states]
+        id3["calcuate permissive strategy for P >= p [F s]"]
+        id4[calculate importance]
+        id5[create value_map of from mdp]
+        id6[create data matrix and labels vector from value_map]
+        id7[construct decision tree]
+        id1 --> id2
+        id2 --> id3
+        id3 --> id4
+        id4 --> id5
+        id5 --> id6
+        id6 --> id7
+
+```
 After setting up the model of type storm::models::sparse::Mdp<double>, we calculate the maximum possible probability of reaching our goal states, because for calculating a permissive strategy, for need a formula of the form P >= p [F s].
+
 After this, we calculate the importance using calculateImps from importance_calculation/impCalc.cpp.
+
 Then the pipeline calls createStateActionPairs from genTrainData.cpp to convert the state-actions pairs of the mdp into the value_map.
 Finally the function createTrainingData in genTrainData.cpp converts this value map into a matrix and label pair that we can use as input for the decision tree.
 
 ### genTrainData.cpp
-In this section we will give an overview of the 
+In this section we will give an overview of the relationship between the functions in genTrainData.cpp.
+The purpose of these functions is as helpers for the createTrainingData.cpp function.
 #### 
 
 ```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
+  flowchart TD
+      id1-->id2
+      id2-->id3
+
+      subgraph createMatrxiFromValueMap 
+      sid1[createMatrixFromValueMap]
+      sid2[createMatrixHelper]
+      sid3[categoricalFeatureOneHotEncoding]
+      sid1 --> sid2
+      sid1 --> sid3 
+      end
+
+      id1["allPairsMat = createMatrixFromValueMap(value_map, mdpInfo) 
+      strategyPairsMat = createMatrixFromValueMap(value_map_submdp, mdpInfo)"]
+      id2["labels = createDataLabels(allPairsMat, strategyPairsMat)"]
+      id3["repeatDataLabels(allPairsMat, labels, mdpInfo)"]
 ```
 
 ## CMake structure
+We have included mlpack as an ExternalProject, because we need the feature of accessing the ClassProbabilities vector in order to visualise the tree.
+This feature is alreay in master however not yet in most common distributions.
 
-## Mlpack
-- Mlpack is column major in arma; Thus each column represents a data point and each row represents a dimension
+Furthermore we have added storm as a submodule to our github project and use the cmake library that it creates directly, because we have modified the calculation of the strategy.
+
+Lastly we use Catch2 to unit test our project.
 ## Setup
 In order to be able to debug the system set the option *STORM_DEVELOPER* to *ON* in **/countexex/storm/CMakeLists.txt**
 ## Extending countexex
