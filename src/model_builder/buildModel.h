@@ -46,6 +46,6 @@ void modelVis(std::shared_ptr<MdpType>& model){
 storm::Environment setUpEnv();
 
 
-std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult, bool max);
+std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult, bool max, int safetyPrec);
 
 std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, storm::logic::ProbabilityOperatorFormula> buildModelForSafetyProperty(std::string const& pathToModel, std::string const& safetyProp);

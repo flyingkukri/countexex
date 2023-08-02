@@ -68,7 +68,7 @@ Help:
 
 Check task:
   -m [ --model ] arg                    Required argument: Path to model file. 
-                                        Model has to be in PRISM format: e.g. 
+                                        Model has to be in PRISM format: e.g., 
                                         model.nm
   -p [ --propertyMax ] arg              Required argument: Specify wether you 
                                         want to check Pmax or Pmin. Set the 
@@ -88,6 +88,8 @@ Configuration arguments:
                                         decision tree learning.
   -i [ --importanceDelta ] arg (=0.001) Set the delta parameter for the 
                                         importance calculation.
+  -s [ --safetyPrec ] arg (=16)         Set the precision for the safety 
+                                        property bound.
 ```
 
 ### Input format
@@ -124,7 +126,7 @@ In case you want to change them, you have two options:
 ```
 
 2. Options specified via config file: 
-Create a config file: e.g. config.txt and specify the desired parameters:
+Create a config file: e.g., config.txt and specify the desired parameters:
 
 ```
 # config.txt:
@@ -145,12 +147,14 @@ For more information on the decision tree learning parameters see: [mlpack Decis
 
 **ImportanceDelta**: we compute for each state an importance value **Imp_s**, that indicates how often this state is repeated in the training data. However, if **Imp_s** is below a certain threshold: **importanceDelta**, we will simply discard this state. Depending on your model structure and set of target states, you might want to change this parameter defaulting to 0.001. 
 
+**safetyPrec**: the permissive strategy computation expects safety properties of the following form: e.g., for propertyMax=max: P >= Pmax [F s]. We therefore need to convert Pmax to a string with a fixed number of decimal places, which is specified by **safetyPrec**. Depending on the expected value of Pmax you might want to change safetyPrec, e.g., to a higher value for very small values of Pmax.  
+
 ## Reading the output
 The decision tree is stored at **/countexex/build/app/graph.dot** as a **DOT file** and can be converted to a pdf via the command 
 ```bash
 dot -Tpdf graph.dot -o graph.pdf
 ```
-or visualized e.g. by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
+or visualized e.g., by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
 
 ## Development
 Click [here](doc/develop.md) for information regarding our code structure.

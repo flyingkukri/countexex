@@ -65,7 +65,7 @@ bool pipeline(std::string const& pathToModel, bool propertyMax, config  const& c
 
     // Generate safety property for permissive scheduler from initStateCheckResult:
     auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
-    std::string safetyProp = generateSafetyProperty(formulaString, initStateCheckResult,propertyMax);
+    std::string safetyProp = generateSafetyProperty(formulaString, initStateCheckResult, propertyMax, conf.prec);
 
     // Generate safety property model and formula
     auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
@@ -191,7 +191,7 @@ int main (int argc, char *argv[]) {
     
     po::options_description input("Check task");
     input.add_options()
-    ("model,m", po::value<std::string>(), "Required argument: Path to model file. Model has to be in PRISM format: e.g. model.nm")
+    ("model,m", po::value<std::string>(), "Required argument: Path to model file. Model has to be in PRISM format: e.g., model.nm")
     ("propertyMax,p", po::value<std::string>(), "Required argument: Specify wether you want to check Pmax or Pmin. Set the argument to max or min accordingly.");
 
     po::options_description configuration("Configuration arguments");
@@ -200,7 +200,8 @@ int main (int argc, char *argv[]) {
     ("minimumGainSplit,g", po::value<double>()->default_value(1e-7), "Set the minimumGainSplit parameter for the decision tree learning.")
     ("minimumLeafSize,l", po::value<size_t>()->default_value(5), "Set the minimumLeafSize parameter for the decision tree learning.")
     ("maximumDepth,d", po::value<size_t>()->default_value(10), "Set the maximumDepth parameter for the decision tree learning.")
-    ("importanceDelta,i", po::value<double>()->default_value(0.001), "Set the delta parameter for the importance calculation.");
+    ("importanceDelta,i", po::value<double>()->default_value(0.001), "Set the delta parameter for the importance calculation.")
+    ("safetyPrec,s", po::value<int>()->default_value(16), "Set the precision for the safety property bound.");
 
     po::options_description cmdline_options("Usage");
     cmdline_options.add(generic).add(input).add(configuration);
@@ -261,7 +262,12 @@ int main (int argc, char *argv[]) {
         std::cout << "importanceDelta: " << vm["importanceDelta"].as<double>() << std::endl;
     }
 
+    if (vm.count("safetyPrec")) {
+        std::cout << "safetyPrec: " << vm["safetyPrec"].as<int>() << std::endl;
+    }
+
     conf.delta = vm["importanceDelta"].as<double>();
+    conf.prec = vm["safetyPrec"].as<int>();
     DtConfig dtConfig = {vm["minimumGainSplit"].as<double>(), vm["minimumLeafSize"].as<size_t>(), vm["maximumDepth"].as<size_t>()};
 
     // Call function

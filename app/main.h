@@ -15,6 +15,7 @@ typedef struct config{
         double delta;
         int C;
         int l;
+        int prec;
 } config;
 
 struct DtConfig{
