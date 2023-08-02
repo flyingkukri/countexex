@@ -43,17 +43,14 @@
 
 namespace po = boost::program_options;
 
-bool pipeline(std::string const& pathToModel, std::string const& propertyString, config  const& conf, DtConfig& dtConfig) {
-
-    // TODO: currently works only for pathToModel = examples/die_c1.nm
-    //  Properties should be in propertyString in the future: lines below just for quick testing
+bool pipeline(std::string const& pathToModel, bool propertyMax, config  const& conf, DtConfig& dtConfig) {
 
     std::string label = "goal";
-    std::string formulasString = "Pmax=? [ F \"" + label + " \"];";
+    std::string formulaString = (propertyMax ? std::string("Pmax=? ") : std::string("Pmin=? ")) + "[ F \"" + label + " \"];";
 
     // Setup: Build model, environment and check tasks
     auto env = setUpEnv();
-    auto modelFormulas = buildModelFormulas(pathToModel, formulasString);
+    auto modelFormulas = buildModelFormulas(pathToModel, formulaString);
     auto mdp = std::move(modelFormulas.first);
     auto tasks = getTasks(modelFormulas.second);
 
@@ -68,8 +65,7 @@ bool pipeline(std::string const& pathToModel, std::string const& propertyString,
 
     // Generate safety property for permissive scheduler from initStateCheckResult:
     auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
-    std::string safetyProp = generateSafetyProperty(formulasString, initStateCheckResult);
-    // std::cout << "Check result from Pmax=? [ F psi]: " << initStateCheckResult << std::endl;
+    std::string safetyProp = generateSafetyProperty(formulaString, initStateCheckResult,propertyMax);
 
     // Generate safety property model and formula
     auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
@@ -175,7 +171,8 @@ bool pipeline(std::string const& pathToModel, std::string const& propertyString,
 
 int main (int argc, char *argv[]) {
     // Arguments
-    std::string model, property;
+    std::string model;
+    bool max=true;
     
     config conf;
     conf.C = 10000;
@@ -192,18 +189,18 @@ int main (int argc, char *argv[]) {
     generic.add_options()
     ("help,h", "Print help message and exit");
     
-    po::options_description configuration("Configuration arguments (Can be specified via command line or config file)");
+    po::options_description input("Check task");
+    input.add_options()
+    ("model,m", po::value<std::string>(), "Required argument: Path to model file. Model has to be in PRISM format: e.g. model.nm")
+    ("propertyMax,p", po::value<std::string>(), "Required argument: Specify wether you want to check Pmax or Pmin. Set the argument to max or min accordingly.");
+
+    po::options_description configuration("Configuration arguments");
     configuration.add_options()
-    ("config,c", po::value<std::string>(), "Path to a config file where the following parameters can be specified.")
+    ("config,c", po::value<std::string>(), "Path to a config file where the following parameters can be specified in alternative to specifying them via the command line.")
     ("minimumGainSplit,g", po::value<double>()->default_value(1e-7), "Set the minimumGainSplit parameter for the decision tree learning.")
     ("minimumLeafSize,l", po::value<size_t>()->default_value(5), "Set the minimumLeafSize parameter for the decision tree learning.")
     ("maximumDepth,d", po::value<size_t>()->default_value(10), "Set the maximumDepth parameter for the decision tree learning.")
     ("importanceDelta,i", po::value<double>()->default_value(0.001), "Set the delta parameter for the importance calculation.");
-
-    po::options_description input("Input files");
-    input.add_options()
-    ("model", po::value<std::string>(), "Required argument: Path to model file. Model has to be in PRISM format: e.g. model.nm")
-    ("property", po::value<std::string>(), "Required argument: Path to property file. Property has to be of the form e.g.: Pmax=? [F 'goal']");
 
     po::options_description cmdline_options("Usage");
     cmdline_options.add(generic).add(input).add(configuration);
@@ -228,15 +225,26 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
-    if (!vm.count("model") || !vm.count("property")) {
-        std::cerr << "Error: Model and property files are required!" << std::endl;
+    if (!vm.count("model") || !vm.count("propertyMax")) {
+        std::cerr << "Error: Model file is required!" << std::endl;
         return 1;
     }
 
     model = vm["model"].as<std::string>(); 
-    property = vm["property"].as<std::string>();
 
-    
+    if(vm.count("propertyMax")){
+        if(vm["propertyMax"].as<std::string>()=="max"){
+            std::cout << "Property: Pmax=? [ F \"goal\" ]" << std::endl;
+            max = true;
+        } else if(vm["propertyMax"].as<std::string>()=="min"){
+            std::cout << "Property: Pmin=? [ F \"goal\" ]" << std::endl;
+            max = false;
+        } else {
+            std::cerr << "Error: propertyMax can take either one of the following values: max, min. For more information, type -h" << std::endl;
+            return 1;
+        }
+    }
+
     if (vm.count("minimumGainSplit")) {
         std::cout << "minimumGainSplit: " << vm["minimumGainSplit"].as<double>() << std::endl; 
     } 
@@ -257,5 +265,5 @@ int main (int argc, char *argv[]) {
     DtConfig dtConfig = {vm["minimumGainSplit"].as<double>(), vm["minimumLeafSize"].as<size_t>(), vm["maximumDepth"].as<size_t>()};
 
     // Call function
-    // pipeline(model, property, conf, dtConfig);
+    pipeline(model, max, conf, dtConfig);
 }
