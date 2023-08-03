@@ -32,13 +32,37 @@
 #include <memory>
 #include <variant>
 
+/*! 
+ * This struct contains information about the mdp
+ */
 typedef struct {
+        /* This maps the feature id to its name*/
         std::map<int,std::string> featureMap; 
+        /* This maps the action id to its name*/
         std::map<int, std::string> identifierActionMap;
+        /* A vector containing the importance for each state */
         std::vector<int> imps;
+        /* The number of action ids*/
         int numOfActId;
 } MdpInfo;
 
+/*!
+ * This data structure is our representation of the state-action pairs. 
+ * it is a map from a string that is either 
+ * 1. the name of a variable (or dimension in mlpack)
+ * 2. "action"
+ * 3. "imps"
+ * 
+ * to a vector of values. 
+ * The cartesian product of the n-th entry of the vectors for every key and "action" constitute a state-action pair.
+ * We further add the vector imps which is the id of the state, so that we can later repeat this state-action pair as often as needed.
+*/
+typedef std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> ValueMap;
+
+/*!
+ * Print the state-action pairs of the mdp
+ * @param mdp: the mdp for which we want to print the state-action pairs
+*/
 template <typename MdpType>
 void printStateActPairs(std::shared_ptr<MdpType>& mdp){
     auto val = mdp->getStateValuations();
@@ -61,10 +85,15 @@ void printStateActPairs(std::shared_ptr<MdpType>& mdp){
     }
 }
 
+/*!
+ * Create a ValueMap from the mdp
+ * @param mdp: the mdp for which we want extract the state-action pairs
+ * @param mdpInfo: the struct containing information about the mdp (we will fill the actionIdentifierMap)
+*/
 template <typename MdpType>
-std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
+ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
     auto val = mdp->getStateValuations();
-    std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
+    ValueMap value_map;
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto choices = mdp->getNumberOfChoices(i);
@@ -128,14 +157,57 @@ std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> createS
     return value_map;
 }
 
+/*!
+ * we add a new row to the bottom of the matrix
+ * @param armaData: the arma::mat to which we will add a rowVec
+ * @param rowVec: a dummy vector that will contain the valueVector but converted to double
+ * @param valueVector: the vector that contains the values that we want to add to the matrix
+ * 
+*/
 void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
+
+/*!
+ * We add an n x n identity matrix to the bottom of the matrix, where n is mdpInfo.numOfActId
+ * @param armaData: the arma::mat to which we will add an identity matrix  
+ * @param mdpInfo: the MdpInfo object that contains the featureMap; the dimension of each row that we add will be called "action"
+ * @param valueVector: the vector that contains the action identifiers
+*/
 void categoricalFeatureOneHotEncoding(arma::mat& armaData, MdpInfo& mdpInfo, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
+/*!
+ * We create a matrix from the valueMap. We will use mdpInfo.imps to repeat data points.
+ * Further we will fill out mdpInfo.featureMap an mdpInfo.actionIdentifierMap
+ * @param valueMap: map containing the variable names as keys and the corresponding vectors as values
+ * @param mdpInfo: struct containing information about the MDP; we will add the feature names to the featureMap
+ * @return: matrix containing the data points of the MDP (see data in develop.md for details)
+ */
 arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, MdpInfo& mdpInfo);
 
+/*!
+ * Create Labels for the allPairs matrix. 1 if the pair is in the strategy, 0 otherwise
+ * @param allPairs: matrix containing the s-a pairs of the MDP
+ * @param strategyPairs: matrix containing the s-a pairs of the strategy
+ * @return: vector containing the labels for the s-a pairs (1 if the pair is in the strategy, 0 otherwise)
+ */
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo);
-
+/*! 
+ * Repeat the data points according to the importance of the state (and remove the importance row)
+ * @param data: matrix containing the s-a pairs
+ * @param labels: vector containing the labels for the s-a pairs
+ * @param mdpInfo: struct containing struct.importance for the importance of each state
+ * @return: pair of matrices: first matrix contains the s-a pairs repeated as often as the importance of the state.
+ *          the row vector contains the labels for the s-a pairs also repeated as often as the importance of the state.
+ *
+ */
 std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);
+
+/*!
+ * The main function to create the training data from the value map
+ * @param valueMap The value map containing all the state-action pairs
+ * @param valueMap The value map containing the state-action pairs of the strategy
+ * @param mdpInfo The MdpInfo object containing the information about the MDP
+ * @return A pair of the training data and the labels.
+ */
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo);
