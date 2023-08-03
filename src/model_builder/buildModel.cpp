@@ -62,14 +62,14 @@ storm::Environment setUpEnv(){
     return env;
 }
 
-std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult){
+std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult, bool max, int safetyPrec){
     std::string reach_obj_substr = formulasString.substr(formulasString.find('['));
 
     // TODO: how to setprecision?
     std::ostringstream oss;
-    oss << std::fixed << std::setprecision(16) << initStateCheckResult;
+    oss << std::fixed << std::setprecision(safetyPrec) << initStateCheckResult;
     // Create safetyProperty from initStateCheckResult and reachability formula to generate only strategies that are as good as the e-optimal one
-    std::string safetyProp = "P>=" + oss.str() + " " + reach_obj_substr;
+    std::string safetyProp = (max ? std::string("P>=") : std::string("P<=")) + oss.str() + " " + reach_obj_substr;
     std::cout << safetyProp << std::endl;
     return safetyProp;
 }

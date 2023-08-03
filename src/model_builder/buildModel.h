@@ -54,8 +54,10 @@ storm::Environment setUpEnv();
  * Replace the Pmax/min with an explicit probability
  * @param formulaString: the formula string
  * @param initStateCheckResult: the maximum probability of reaching a goal state from the initial state.
+ * @param max: true if Pmax, false if Pmin
+ * @param safetyPrec: precision for the safety property
 */
-std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult);
+std::string generateSafetyProperty(std::string const& formulasString, double initStateCheckResult, bool max, int safetyPrec);
 
 /*!
  * Build the model for the safety property
