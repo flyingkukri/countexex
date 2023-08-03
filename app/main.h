@@ -33,4 +33,4 @@ struct DtConfig{
  * 3. Visualize the strategy as decision tree using DT learning
  * @return DOT file of the dt strategy representation
  */
-bool pipeline(std::string const& path_to_model, bool max, config  const& conf, DtConfig& dtConfig);
+bool pipeline(std::string const& path_to_model, bool max, config  const& conf, DtConfig& dtConfig, bool verbose);
