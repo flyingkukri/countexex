@@ -66,7 +66,6 @@ void pipeline(std::string const& pathToModel, bool propertyMax, config  const& c
         std::cout << "Safety Property: " << safetyProp << std::endl;
     }
 
-
     // Generate safety property model and formula
     auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
     auto safetyMdp = std::move(modelSafetyProp.first);
@@ -92,8 +91,8 @@ void pipeline(std::string const& pathToModel, bool propertyMax, config  const& c
     mdpInfo.imps = calculateImps(submdp, l, C, delta, label);
     
     // Create training data: Repeat the samples importance times
-    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(mdp, mdpInfo);
-    mdpInfo.numOfActId = mdp->getChoiceOrigins()->getNumberOfIdentifiers();
+    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(safetyMdp, mdpInfo);
+    mdpInfo.numOfActId = safetyMdp->getChoiceOrigins()->getNumberOfIdentifiers();
     auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, mdpInfo);
     if(verbose){
         std::cout << "Created value map" << std::endl;
@@ -132,7 +131,7 @@ int main (int argc, char *argv[]) {
     // Set some settings objects.
     storm::settings::initializeAll("countexex", "countexex");
 
-    // Declare the supported options.
+    // Declare the supported CL options.
     po::options_description generic("General");
     generic.add_options()
     ("help,h", "Print help message and exit")

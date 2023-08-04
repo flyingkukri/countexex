@@ -6,7 +6,7 @@ TEST_CASE("repeatDataLabels") {
     SECTION("Test that dimension are correct") {
         std::vector<int> importance = {1, 2, 3};
         // Create a matrix with 3 rows and 4 columns
-        arma::mat data(3, 4, arma::fill::zeros);
+        arma::fmat data(3, 4, arma::fill::zeros);
         data.at(0, 0) = 0.;
         data.at(0, 1) = 1.;
         data.at(0, 2) = 1.;
@@ -14,7 +14,7 @@ TEST_CASE("repeatDataLabels") {
         arma::Row<size_t> labels = ("0 1 0 1");
         MdpInfo mdpInfo;
         mdpInfo.imps = importance;
-        std::pair<arma::mat, arma::Row<size_t>> result = repeatDataLabels(data, labels, mdpInfo);
+        std::pair<arma::fmat, arma::Row<size_t>> result = repeatDataLabels(data, labels, mdpInfo);
         //  we should have 1 + 2 * 2 + 3 = 8 rows
         REQUIRE(result.first.n_rows == 2);
         REQUIRE(result.first.n_cols == 8);
@@ -27,7 +27,7 @@ TEST_CASE("createDataLabels") {
     SECTION("Test that labels get set correctly") {
         // Create a matrix with 3 rows (dimensions) and 10 columns (observations)
     //    arma_rng::set_seed_random(); 
-        double arr[] = {
+        float arr[] = {
             1., 2., 4.,
             5., 6., 7.,
             8., 9., 10.,
@@ -39,9 +39,9 @@ TEST_CASE("createDataLabels") {
             100., 0.01, 22.,
             23., 24., 25.
         };
-        arma::mat allPairs(arr, 3, 10, false);
+        arma::fmat allPairs(arr, 3, 10, false);
         arma::uvec indices = {1, 2, 5, 7, 9};
-        arma::mat strategyPairs = allPairs.cols(indices);
+        arma::fmat strategyPairs = allPairs.cols(indices);
         arma::Row<size_t> labels = createDataLabels(allPairs, strategyPairs);
         for (size_t i = 0; i < labels.n_cols; ++i) {
             if (arma::any(indices == i)) {
