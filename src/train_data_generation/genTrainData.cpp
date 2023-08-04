@@ -131,8 +131,7 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
 {
     arma::mat data_new(data.n_rows, 0);
     arma::Row<size_t> labels_new;
-    // TODO foreach loop
-    for (int c = 0; c < data.n_cols; c++)
+    for (int c = 0; c < data.n_cols; ++c)
     {
         // Our stateIndex is the first row.
         int stateIndex = data.at(0, c);

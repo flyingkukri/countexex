@@ -124,7 +124,6 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
                 }
                 varIt.operator++();
             }
-            // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
             auto key = "action";
             auto actionIdentifier = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k);
             // insert key to value_map
