@@ -41,15 +41,15 @@ void categoricalFeatureOneHotEncoding(arma::mat &armaData, MdpInfo &mdpInfo, std
         {
             arma::Row<double> rowVec = arma::zeros<arma::Row<double>>(ncols);
             armaData = arma::join_vert(armaData, rowVec);
-            // indicate for each row i that it represents an action feature
+            // Indicate for each row i that it represents an action feature
             mdpInfo.featureMap.insert(std::make_pair(i, "action"));
         }
 
-        // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
-        // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
+        // IntVector: each entry i corresponds to the actionIdentifier of the i-th data point
+        // Ee thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
         for (int i = 0; i < ncols; ++i)
         {
-            // as we store the stateIndex in the first row temporarily we add +1 to access a row i logically
+            // As we store the stateIndex in the first row temporarily we add +1 to access a row i logically
             armaData.at((*intVector).at(i) + 1, i) = 1;
         }
     }
@@ -64,17 +64,16 @@ arma::mat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 
     // Every row of the resulting matrix corresponds to a feature
     // Create a mapping between variable names and row numbers(==feature number)
-    // std::map<int,std::string> featureMap;
 
-    // make sure imps is the first row in the matrix
+    // Make sure imps is the first row in the matrix
     auto it = valueMap.find(imps);
     std::variant<std::vector<int>, std::vector<bool>> &valueVector = it->second;
     if (it != valueMap.end())
     {
         createMatrixHelper(armaData, rowVec, valueVector);
-    } // no entry in featureMap for imps as this row will be removed from the matrix for training
+    } // No entry in featureMap for imps as this row will be removed from the matrix for training
 
-    // one-hot encoding for the categorical action features
+    // One-hot encoding for the categorical action features
     it = valueMap.find(act);
     valueVector = it->second;
     if (it != valueMap.end())
@@ -83,7 +82,7 @@ arma::mat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
     }
 
     auto featureIndex = mdpInfo.numOfActId;
-    // loop over all other key-value pairs
+    // Loop over all other key-value pairs
     for (const auto &pair : valueMap)
     {
         // Get the vector corresponding to the key
@@ -101,7 +100,7 @@ arma::mat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 
 arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs)
 {
-    // column-major in arma: thus each column represents a data point
+    // Column-major in arma: thus each column represents a data point
     size_t numColumns = allPairs.n_cols;
     arma::Row<size_t> labels(numColumns, arma::fill::zeros);
     for (size_t i = 0; i < numColumns; ++i)
@@ -142,15 +141,15 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
         labels_new = arma::join_horiz(labels_new, addToVec);
     }
 
-    // exclude the first row containing only stateIndex information
+    // Exclude the first row containing only stateIndex information
     arma::mat trainData = data_new.submat(1, 0, data_new.n_rows - 1, data_new.n_cols - 1);
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, MdpInfo &mdpInfo)
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMapSubmdp, MdpInfo &mdpInfo)
 {
     arma::mat allPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
-    arma::mat strategyPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
+    arma::mat strategyPairsMat = createMatrixFromValueMap(valueMapSubmdp, mdpInfo);
     arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
     return repeatDataLabels(allPairsMat, labels, mdpInfo);
 }

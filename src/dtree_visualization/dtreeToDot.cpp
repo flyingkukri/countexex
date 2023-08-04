@@ -33,7 +33,7 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
             }else{ // numeric feature:  
                 // Currently only int and bool types are supported,
                 // thus we can simply round down the splitter without checking the type of the variable
-                output << " <=" << std::floor(dt.ClassProbabilities());
+                output << " <= " << std::floor(dt.ClassProbabilities()[0]);
             }
         }
     }
