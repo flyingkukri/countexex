@@ -12,9 +12,8 @@
 #include <storm/models/sparse/StandardRewardModel.h>
 
 int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator,
-                storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates) {
-    uint64_t seed = random();
-    simulator.setSeed(seed);
+                storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates, int currentSeed) {
+    simulator.setSeed(currentSeed);
     // Reset the visited vector to zero before each simulation
     std::fill(visited.begin(), visited.end(), 0);
     int state = simulator.getCurrentState();
@@ -33,21 +32,26 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
     return 0;
 }
 
-std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, int l, int C, int delta, const std::string& label) {
+std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, int l, int c, int delta, const std::string& label) {
+    // Set seed for deterministic results
+    srand(42);
+    uint64_t seed; 
+
     storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator(model);
-    int nstates = model.getNumberOfStates();
-    std::vector<int> imps(nstates, 0);
-    std::vector<int> visited(nstates, 0);
+    int nStates = model.getNumberOfStates();
+    std::vector<int> imps(nStates, 0);
+    std::vector<int> visited(nStates, 0);
     storm::storage::BitVector finalStates = model.getStates(label);
 
-    for (int i = 0; i < C; ++i) {
+    for (int i = 0; i < c; ++i) {
         // simulateRun returns 1 if we are in a final state - we loop until it returns 1 to get in total C simulations reaching the target
+        seed = random();
         int result = 0;
         do { 
-            result = simulateRun(simulator, model, visited, l, finalStates);
+            result = simulateRun(simulator, model, visited, l, finalStates, seed);
         } while(!result);
         
-        for (int j = 0; j < nstates; ++j) {
+        for (int j = 0; j < nStates; ++j) {
             assert(visited[j] == 0 || visited[j] == 1);
             imps[j] += visited[j];
             visited[j] = 0;

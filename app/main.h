@@ -13,7 +13,7 @@ typedef storm::models::sparse::Mdp<double> Mdp;
 
 typedef struct config{
         double delta;
-        int C;
+        int c;
         int l;
         int prec;
 } config;

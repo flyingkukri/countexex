@@ -79,34 +79,34 @@ void pipeline(std::string const& pathToModel, bool propertyMax, config  const& c
     
     // Apply scheduler on safetyMdp to obtain submdp on which we run the simulations
     auto submdp = permissive_scheduler->apply();
-    auto submdp_ptr = std::make_shared<decltype(submdp)>(submdp);
+    auto submdpPtr = std::make_shared<decltype(submdp)>(submdp);
 
     // Simulate C runs on submdp to approximate importance of states
-    int l, C, delta;
+    int l, c, delta;
     l = conf.l;
-    C = conf.C;
-    delta = C*conf.delta;
+    c = conf.c;
+    delta = c*conf.delta;
 
     MdpInfo mdpInfo;
-    mdpInfo.imps = calculateImps(submdp, l, C, delta, label);
+    mdpInfo.imps = calculateImps(submdp, l, c, delta, label);
     
     // Create training data: Repeat the samples importance times
-    auto value_map = createStateActPairs<storm::models::sparse::Mdp<double>>(safetyMdp, mdpInfo);
+    auto valueMap = createStateActPairs<storm::models::sparse::Mdp<double>>(safetyMdp, mdpInfo);
     mdpInfo.numOfActId = safetyMdp->getChoiceOrigins()->getNumberOfIdentifiers();
-    auto value_map_submdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdp_ptr, mdpInfo);
+    auto valueMapSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdpPtr, mdpInfo);
     if(verbose){
         std::cout << "Created value map" << std::endl;
     }
 
-    auto result = createTrainingData(value_map, value_map_submdp, mdpInfo);
+    auto result = createTrainingData(valueMap, valueMapSubmdp, mdpInfo);
     if(verbose){
         std::cout << "Created training data" << std::endl;
     }
-    auto all_pairs = result.first;
+    auto allPairs = result.first;
     auto labels = result.second;
 
     // DT learning
-    mlpack::DecisionTree<> dt(all_pairs, labels,2, dtConfig.minimumLeafSize, dtConfig.minimumGainSplit, dtConfig.maximumDepth);
+    mlpack::DecisionTree<> dt(allPairs, labels,2, dtConfig.minimumLeafSize, dtConfig.minimumGainSplit, dtConfig.maximumDepth);
 
     // Visualize the tree
     std::ofstream file;
@@ -122,7 +122,7 @@ int main (int argc, char *argv[]) {
     bool verbose = false;
     
     config conf;
-    conf.C = 10000;
+    conf.c = 10000;
     conf.l = 10000;
 
     // Init loggers

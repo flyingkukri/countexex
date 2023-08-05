@@ -55,17 +55,17 @@ TEST_CASE("createDataLabels") {
 
 TEST_CASE("createMatrixFromValueMapTest") {
     SECTION("Main Test") {
-        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
-        value_map["imps"] = std::vector<int>{1, 2, 3};
-        value_map["action"] = std::vector<int>{0, 1, 2};
-        value_map["a"] = std::vector<int>{5, 2, 1};
-        value_map["b"] = std::vector<int>{1, 2, 3};
-        value_map["lol"] = std::vector<bool>{true, false, true};
+        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> valueMap;
+        valueMap["imps"] = std::vector<int>{1, 2, 3};
+        valueMap["action"] = std::vector<int>{0, 1, 2};
+        valueMap["a"] = std::vector<int>{5, 2, 1};
+        valueMap["b"] = std::vector<int>{1, 2, 3};
+        valueMap["lol"] = std::vector<bool>{true, false, true};
 
         MdpInfo mdpInfo;
         mdpInfo.imps = std::vector<int>{1, 1, 1};
         mdpInfo.numOfActId = 3;
-        arma::fmat result = createMatrixFromValueMap(value_map, mdpInfo);
+        arma::fmat result = createMatrixFromValueMap(valueMap, mdpInfo);
         
         arma::fmat test = 
         {
@@ -147,24 +147,24 @@ TEST_CASE("categoricalFeatureOneHotEncodingTest") {
 
 TEST_CASE("createTrainingDataTest") {
     SECTION("Main Test") {
-        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map;
-        value_map["imps"] = std::vector<int>{0, 1, 2};
-        value_map["action"] = std::vector<int>{0, 1, 2};
-        value_map["a"] = std::vector<int>{5, 2, 1};
-        value_map["b"] = std::vector<int>{1, 2, 3};
-        value_map["lol"] = std::vector<bool>{true, false, true};
+        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> valueMap;
+        valueMap["imps"] = std::vector<int>{0, 1, 2};
+        valueMap["action"] = std::vector<int>{0, 1, 2};
+        valueMap["a"] = std::vector<int>{5, 2, 1};
+        valueMap["b"] = std::vector<int>{1, 2, 3};
+        valueMap["lol"] = std::vector<bool>{true, false, true};
 
-        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> value_map_submdp;
-        value_map_submdp["imps"] = std::vector<int>{0, 2};
-        value_map_submdp["action"] = std::vector<int>{0, 2};
-        value_map_submdp["a"] = std::vector<int>{5, 1};
-        value_map_submdp["b"] = std::vector<int>{1, 3};
-        value_map_submdp["lol"] = std::vector<bool>{true, true};
+        std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> valueMapsubmdp;
+        valueMapsubmdp["imps"] = std::vector<int>{0, 2};
+        valueMapsubmdp["action"] = std::vector<int>{0, 2};
+        valueMapsubmdp["a"] = std::vector<int>{5, 1};
+        valueMapsubmdp["b"] = std::vector<int>{1, 3};
+        valueMapsubmdp["lol"] = std::vector<bool>{true, true};
 
         MdpInfo mdpInfo;
         mdpInfo.imps = std::vector<int>{1, 2, 3};
         mdpInfo.numOfActId = 3;
-        auto result = createTrainingData(value_map, value_map_submdp, mdpInfo);
+        auto result = createTrainingData(valueMap, valueMapsubmdp, mdpInfo);
         arma::fmat data = result.first;
         arma::Row<size_t> labels = result.second;
         
@@ -199,10 +199,10 @@ TEST_CASE("CreateMatrixHelperTest"){
             {1, 2, 3, 5},
             {4, 5, 6, 7}
         };
-        std::vector<int> vec = {5, 6, 7, 1};
-        std::variant<std::vector<int>, std::vector<bool>> vec_ = vec;
+        std::vector<int> vec_ = {5, 6, 7, 1};
+        std::variant<std::vector<int>, std::vector<bool>> vec = vec_;
         arma::frowvec rowVec;
-        createMatrixHelper(baseMat, rowVec, vec_);
+        createMatrixHelper(baseMat, rowVec, vec);
         arma::fmat test = 
         {
             {1, 2, 3, 5},
@@ -222,10 +222,10 @@ TEST_CASE("CreateMatrixHelperTest"){
             {1, 2, 3, 5},
             {4, 5, 6, 7}
         };
-        std::vector<int> vec = {true, false, true, false};
-        std::variant<std::vector<int>, std::vector<bool>> vec_ = vec;
+        std::vector<int> vec_ = {true, false, true, false};
+        std::variant<std::vector<int>, std::vector<bool>> vec = vec_;
         arma::frowvec rowVec;
-        createMatrixHelper(baseMat, rowVec, vec_);
+        createMatrixHelper(baseMat, rowVec, vec);
         arma::fmat test = 
         {
             {1, 2, 3, 5},

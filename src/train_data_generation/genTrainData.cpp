@@ -36,11 +36,11 @@ void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, st
     // We know that the variant holds an int vector in this case as it contains the action identifiers
     if (const auto intVector = std::get_if<std::vector<int>>(&valueVector))
     {
-        auto ncols = (*intVector).size();
+        auto nCols = (*intVector).size();
         // Create a feature row in the matrix for every actionIdentifier: e.g. if there are 10 different actions we add 10 feature rows to the matrix
         for (int i = 0; i < mdpInfo.numOfActId; ++i)
         {
-            arma::Row<float> rowVec = arma::zeros<arma::Row<float>>(ncols);
+            arma::Row<float> rowVec = arma::zeros<arma::Row<float>>(nCols);
             armaData = arma::join_vert(armaData, rowVec);
             // Indicate for each row i that it represents an action feature
             mdpInfo.featureMap.insert(std::make_pair(i, "action"));
@@ -49,7 +49,7 @@ void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, st
 
         // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
         // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
-        for (int i = 0; i < ncols; ++i)
+        for (int i = 0; i < nCols; ++i)
         {
             // As we store the stateIndex in the first row temporarily we add +1 to access a row i logically
             armaData.at((*intVector).at(i) + 1, i) = 1;
@@ -131,8 +131,8 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
 
 std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo)
 {
-    arma::fmat data_new(data.n_rows, 0);
-    arma::Row<size_t> labels_new;
+    arma::fmat dataNew(data.n_rows, 0);
+    arma::Row<size_t> labelsNew;
     for (int c = 0; c < data.n_cols; ++c)
     {
         // Our stateIndex is the first row.
@@ -140,13 +140,13 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
         // Repeat the s-a pair as often as the importance of the state
         arma::fmat addToMat = arma::repmat(data.col(c), 1, mdpInfo.imps[stateIndex]);
         arma::Row<size_t> addToVec = arma::repmat(labels.col(c), 1, mdpInfo.imps[stateIndex]);
-        data_new = arma::join_horiz(data_new, addToMat);
-        labels_new = arma::join_horiz(labels_new, addToVec);
+        dataNew = arma::join_horiz(dataNew, addToMat);
+        labelsNew = arma::join_horiz(labelsNew, addToVec);
     }
 
     // Exclude the first row containing only stateIndex information
-    arma::fmat trainData = data_new.submat(1, 0, data_new.n_rows - 1, data_new.n_cols - 1);
-    return std::make_pair(trainData, labels_new);
+    arma::fmat trainData = dataNew.submat(1, 0, dataNew.n_rows - 1, dataNew.n_cols - 1);
+    return std::make_pair(trainData, labelsNew);
 }
 
 std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)

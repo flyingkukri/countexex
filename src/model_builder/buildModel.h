@@ -41,8 +41,8 @@ std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTa
 template <typename MdpType>
 void modelVis(std::shared_ptr<MdpType>& model){
     model->printModelInformationToStream(std::cout);
-    auto trans_M = model->getTransitionMatrix();
-    trans_M.printAsMatlabMatrix(std::cout);
+    auto transM = model->getTransitionMatrix();
+    transM.printAsMatlabMatrix(std::cout);
 }
 
 /*!

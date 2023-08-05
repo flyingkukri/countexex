@@ -93,7 +93,7 @@ void printStateActPairs(std::shared_ptr<MdpType>& mdp){
 template <typename MdpType>
 ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
     auto val = mdp->getStateValuations();
-    ValueMap value_map;
+    ValueMap valueMap;
 
     for(int i=0; i<mdp->getNumberOfStates(); ++i){
         auto choices = mdp->getNumberOfChoices(i);
@@ -102,21 +102,21 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
             auto varIt = stateValuation.begin();
             while(varIt != stateValuation.end()){
                 auto key = varIt.getVariable().getName();
-                auto it = value_map.find(key);
+                auto it = valueMap.find(key);
                 if(varIt.getVariable().hasBooleanType()){
                     auto varValue = varIt.getBooleanValue();
-                    if( it == value_map.end()){
-                        value_map.insert(std::make_pair(key, std::vector<bool>{varValue}));
+                    if( it == valueMap.end()){
+                        valueMap.insert(std::make_pair(key, std::vector<bool>{varValue}));
                     }else{
                         auto& vector = std::get<std::vector<bool>>(it->second);
                         vector.push_back(varValue);
                     }
                 }else if(varIt.getVariable().hasIntegerType()){
                     auto varValue = varIt.getIntegerValue();
-                    if(it == value_map.end()){
+                    if(it == valueMap.end()){
                         std::vector<int> int_vector;
                         int_vector.push_back(varValue);
-                        value_map.insert(std::make_pair(key, int_vector));
+                        valueMap.insert(std::make_pair(key, int_vector));
                     }else{
                         auto& vector = std::get<std::vector<int>>(it->second);
                         vector.push_back(varValue);                    
@@ -126,12 +126,12 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
             }
             auto key = "action";
             auto actionIdentifier = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k);
-            // insert key to value_map
-            auto it = value_map.find(key);
-            if(it == value_map.end()){
+            // insert key to valueMap
+            auto it = valueMap.find(key);
+            if(it == valueMap.end()){
                 std::vector<int> int_vector;
                 int_vector.push_back(actionIdentifier);
-                value_map.insert(std::make_pair(key, int_vector));
+                valueMap.insert(std::make_pair(key, int_vector));
             }else{
                 auto& vector = std::get<std::vector<int>>(it->second);
                 vector.push_back(actionIdentifier);
@@ -143,9 +143,9 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
             }
             // Create additional key-vector pair imps: to indicate for each s-a pair to which state id it belongs 
             key = "imps";
-            it = value_map.find(key);
-            if( it == value_map.end()){
-                value_map.insert(std::make_pair(key, std::vector<int>{i}));
+            it = valueMap.find(key);
+            if( it == valueMap.end()){
+                valueMap.insert(std::make_pair(key, std::vector<int>{i}));
             }else{
                 auto& vector = std::get<std::vector<int>>(it->second);
                 vector.push_back(i);
@@ -153,7 +153,7 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
         }
     }
     
-    return value_map;
+    return valueMap;
 }
 
 /*!
@@ -182,7 +182,7 @@ void categoricalFeatureOneHotEncoding(arma::fmat& armaData, MdpInfo& mdpInfo, st
  * @param mdpInfo: struct containing information about the MDP; we will add the feature names to the featureMap
  * @return: matrix containing the data points of the MDP (see data in develop.md for details)
  */
-arma::fmat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, MdpInfo& mdpInfo);
+arma::fmat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMap, MdpInfo& mdpInfo);
 
 /*!
  * Create Labels for the allPairs matrix. 1 if the pair is in the strategy, 0 otherwise
@@ -211,4 +211,4 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
  * @param mdpInfo The MdpInfo object containing the information about the MDP
  * @return A pair of the training data and the labels.
  */
-std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap& value_map, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
+std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap& valueMap, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
