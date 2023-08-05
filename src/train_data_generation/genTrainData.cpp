@@ -149,10 +149,10 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdpSubmdp, MdpInfo &mdpInfo)
+std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)
 {
     arma::fmat allPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
-    arma::fmat strategyPairsMat = createMatrixFromValueMap(valueMapSubmdp, mdpInfo);
+    arma::fmat strategyPairsMat = createMatrixFromValueMap(valueMapSubMdp, mdpInfo);
     arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
     return repeatDataLabels(allPairsMat, labels, mdpInfo);
 }

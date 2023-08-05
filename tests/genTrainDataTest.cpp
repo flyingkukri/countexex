@@ -65,9 +65,9 @@ TEST_CASE("createMatrixFromValueMapTest") {
         MdpInfo mdpInfo;
         mdpInfo.imps = std::vector<int>{1, 1, 1};
         mdpInfo.numOfActId = 3;
-        arma::mat result = createMatrixFromValueMap(value_map, mdpInfo);
+        arma::fmat result = createMatrixFromValueMap(value_map, mdpInfo);
         
-        arma::mat test = 
+        arma::fmat test = 
         {
             {1, 2, 3},
             {1, 0, 0},
@@ -81,18 +81,18 @@ TEST_CASE("createMatrixFromValueMapTest") {
         REQUIRE(result.n_rows == test.n_rows);
         REQUIRE(result.n_cols == test.n_cols);
     
-        REQUIRE(arma::approx_equal(result, test, "absdiff", 0.0001));
+        REQUIRE(arma::all(arma::vectorise(result) == arma::vectorise(test)));
     }
 }
 
 TEST_CASE("categoricalFeatureOneHotEncodingTest") {
     SECTION("Well ordered") {
-        arma::mat baseMat;
+        arma::fmat baseMat;
         MdpInfo mdpInfo;
         mdpInfo.numOfActId = 5;
 
         std::vector<int> actionVec1 = {0, 1, 2, 3, 4};
-        arma::mat test1 = 
+        arma::fmat test1 = 
         {
             {1, 2, 3, 4, 5},
             {1, 0, 0, 0, 0},
@@ -103,7 +103,7 @@ TEST_CASE("categoricalFeatureOneHotEncodingTest") {
         };
 
         std::vector<int> actionVec2 = {1, 3, 2, 4, 0};
-        arma::mat test2 = 
+        arma::fmat test2 = 
         {
             {1, 2, 3, 4, 5},
             {0, 1, 0, 0, 0},
@@ -115,7 +115,7 @@ TEST_CASE("categoricalFeatureOneHotEncodingTest") {
 
         struct testCase {
             std::vector<int> actionVec;
-            arma::mat test;
+            arma::fmat test;
         };
 
         struct testCase testCases[] = {
@@ -133,14 +133,14 @@ TEST_CASE("categoricalFeatureOneHotEncodingTest") {
             std::vector<int> actionVec_ = testCases[i].actionVec;
             std::variant<std::vector<int>, std::vector<bool>> actionVec;
             actionVec = actionVec_;
-            arma::mat test = testCases[i].test;
+            arma::fmat test = testCases[i].test;
             
             categoricalFeatureOneHotEncoding(baseMat, mdpInfo, actionVec);
             CAPTURE(actionVec);
             CAPTURE(i);
-            assert(baseMat.n_rows == test.n_rows);
-            assert(baseMat.n_cols == test.n_cols);
-            assert(arma::approx_equal(baseMat, test, "absdiff", 0.0001));
+            REQUIRE(baseMat.n_rows == test.n_rows);
+            REQUIRE(baseMat.n_cols == test.n_cols);
+            REQUIRE(arma::all(arma::vectorise(baseMat) == arma::vectorise(test)));
         }
     }
 }
@@ -165,10 +165,10 @@ TEST_CASE("createTrainingDataTest") {
         mdpInfo.imps = std::vector<int>{1, 2, 3};
         mdpInfo.numOfActId = 3;
         auto result = createTrainingData(value_map, value_map_submdp, mdpInfo);
-        arma::mat data = result.first;
+        arma::fmat data = result.first;
         arma::Row<size_t> labels = result.second;
         
-        arma::mat test = 
+        arma::fmat test = 
         {
 //            {1, 2, 2, 3, 3, 3},
             {1, 0, 0, 0, 0, 0},
@@ -187,23 +187,23 @@ TEST_CASE("createTrainingDataTest") {
 
         REQUIRE(labels.n_elem == testLabels.n_elem);
 
-        REQUIRE(arma::approx_equal(data, test, "absdiff", 0.0001));
-        REQUIRE(arma::approx_equal(labels, testLabels, "absdiff", 0.0001));
+        REQUIRE(arma::all(arma::vectorise(data) == arma::vectorise(test)));
+        REQUIRE(arma::all(labels == testLabels));
     }
 }
 
 TEST_CASE("CreateMatrixHelperTest"){
     SECTION("Integer Test") {
-        arma::mat baseMat = 
+        arma::fmat baseMat = 
         {
             {1, 2, 3, 5},
             {4, 5, 6, 7}
         };
         std::vector<int> vec = {5, 6, 7, 1};
         std::variant<std::vector<int>, std::vector<bool>> vec_ = vec;
-        arma::rowvec rowVec;
+        arma::frowvec rowVec;
         createMatrixHelper(baseMat, rowVec, vec_);
-        arma::mat test = 
+        arma::fmat test = 
         {
             {1, 2, 3, 5},
             {4, 5, 6, 7},
@@ -213,20 +213,20 @@ TEST_CASE("CreateMatrixHelperTest"){
         REQUIRE(baseMat.n_rows == test.n_rows);
         REQUIRE(baseMat.n_cols == test.n_cols);
     
-        REQUIRE(arma::approx_equal(baseMat, test, "absdiff", 0.0001));
+        REQUIRE(arma::all(arma::vectorise(baseMat) == arma::vectorise(test)));
 
     }
     SECTION("BOOL TEST") {
-        arma::mat baseMat = 
+        arma::fmat baseMat = 
         {
             {1, 2, 3, 5},
             {4, 5, 6, 7}
         };
         std::vector<int> vec = {true, false, true, false};
         std::variant<std::vector<int>, std::vector<bool>> vec_ = vec;
-        arma::rowvec rowVec;
+        arma::frowvec rowVec;
         createMatrixHelper(baseMat, rowVec, vec_);
-        arma::mat test = 
+        arma::fmat test = 
         {
             {1, 2, 3, 5},
             {4, 5, 6, 7},
@@ -236,6 +236,6 @@ TEST_CASE("CreateMatrixHelperTest"){
         REQUIRE(baseMat.n_rows == test.n_rows);
         REQUIRE(baseMat.n_cols == test.n_cols);
     
-        REQUIRE(arma::approx_equal(baseMat, test, "absdiff", 0.0001));
+        REQUIRE(arma::all(arma::vectorise(baseMat) == arma::vectorise(test)));
     }
 }
