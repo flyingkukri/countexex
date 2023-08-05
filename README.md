@@ -8,12 +8,14 @@ Given a probabilistic and non-deterministic system, modeled as Markov Decision P
 
 The approach is threefold:
 
-1. Compute liberal, &epsilon;-optimal strategy
-  We allow multiple actions to be chosen for each state to give the learning algorithm more freedom.
-2. Compute importance of states
-  We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
-3. Learn a decision tree representation of the strategy
-  In the last step, we apply a decision tree learning algorithm on the modified strategy. Via tuning parameters, we are able to influence the size of the resulting tree further, in order to obtain a succinct representation.
+1. **Compute liberal, &epsilon;-optimal strategy:**  
+    We allow multiple actions to be chosen for each state to give the learning algorithm more freedom.
+
+2. **Compute importance of states:**  
+    We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
+
+3. **Learn a decision tree representation of the strategy:**   
+    In the last step, we apply a decision tree learning algorithm on the modified strategy. Via tuning parameters, we are able to influence the size of the resulting tree further, in order to obtain a succinct representation.
     
 
 ## Getting started
@@ -120,7 +122,7 @@ Additionally, the set of states for which we want to check the reachability has 
 label "goal" = s=1|s=2;
 ```
 
-### Examples
+### Example executions
 As the configurable options have default values, they don't need to be specified.
 In case you want to change them, you have two options: 
 
@@ -152,10 +154,8 @@ For more information on the decision tree learning parameters see: [mlpack Decis
 
 **ImportanceDelta**: we compute for each state an importance value **Imp_s**, that indicates how often this state is repeated in the training data. However, if **Imp_s** is below a certain threshold: **importanceDelta**, we will simply discard this state. Depending on your model structure and set of target states, you might want to change this parameter defaulting to 0.001. 
 
-**safetyPrec**: the permissive strategy computation expects safety properties of the following form: 
-
-for propertyMax = max:  P >= Pmax [F s] 
-
+**safetyPrec**: the permissive strategy computation expects safety properties of the following form:  
+for propertyMax = max:  P >= Pmax [F s]  
 We therefore need to convert Pmax to a string with a fixed number of decimal places, which is specified by **safetyPrec**. Depending on the expected value of Pmax you might want to change safetyPrec, e.g., to a higher value for very small values of Pmax.  
 
 ## Reading the output
@@ -164,6 +164,9 @@ The decision tree is located in the folder **{PathToCountexex}/countexex/build/a
 dot -Tpdf graph.dot -o graph.pdf
 ```
 or visualized e.g., by [Graphviz Online](https://dreampuf.github.io/GraphvizOnline/)
+
+## Examples
+Click [here](examples/examples.md) to see a few examples.
 
 ## Development
 Click [here](doc/develop.md) for information regarding our code structure.
