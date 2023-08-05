@@ -8,12 +8,14 @@ Given a probabilistic and non-deterministic system, modeled as Markov Decision P
 
 The approach is threefold:
 
-**1. Compute liberal, &epsilon;-optimal strategy:**  
-  We allow multiple actions to be chosen for each state to give the learning algorithm more freedom.
-**2. Compute importance of states:**  
-  We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
-**3. Learn a decision tree representation of the strategy:**   
-  In the last step, we apply a decision tree learning algorithm on the modified strategy. Via tuning parameters, we are able to influence the size of the resulting tree further, in order to obtain a succinct representation.
+1. **Compute liberal, &epsilon;-optimal strategy:**  
+    We allow multiple actions to be chosen for each state to give the learning algorithm more freedom.
+
+2. **Compute importance of states:**  
+    We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
+
+3. **Learn a decision tree representation of the strategy:**   
+    In the last step, we apply a decision tree learning algorithm on the modified strategy. Via tuning parameters, we are able to influence the size of the resulting tree further, in order to obtain a succinct representation.
     
 
 ## Getting started
