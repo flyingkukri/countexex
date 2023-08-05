@@ -13,8 +13,9 @@ module coin
 	heads : bool init false;
 	tails : bool init false;
 
-	[flip] true -> 0.5: (heads'=true) & (tails'=false) + 0.5: (heads'=false) & (tails'=true);
+	[flip] true -> 0.8: (heads'=true) & (tails'=false) + 0.2: (heads'=false) & (tails'=true);
 	[] true -> (heads'=false) & (tails'=false);
+	[] (N=14) & (heads = false) -> (heads' = false) & (tails' = false);
 endmodule
 
-label "done" = x=N;
+label "goal" = x=N;
