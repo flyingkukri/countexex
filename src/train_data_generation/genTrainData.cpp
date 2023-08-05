@@ -9,6 +9,7 @@
 #include <storm/models/sparse/StandardRewardModel.h>
 #include <bits/stdc++.h>
 #include <iostream>
+#include <armadillo>
 
 void createMatrixHelper(arma::mat &armaData, arma::rowvec &rowVec, std::variant<std::vector<int>, std::vector<bool>> &valueVector)
 {
@@ -45,19 +46,22 @@ void categoricalFeatureOneHotEncoding(arma::mat &armaData, MdpInfo &mdpInfo, std
             mdpInfo.featureMap.insert(std::make_pair(i, "action"));
         }
 
+
         // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
         // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
         for (int i = 0; i < ncols; ++i)
         {
             // as we store the stateIndex in the first row temporarily we add +1 to access a row i logically
             armaData.at((*intVector).at(i) + 1, i) = 1;
+
         }
+
     }
 }
 
 arma::mat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 {
-    arma::mat armaData;
+     arma::mat armaData;
     arma::rowvec rowVec;
     std::string imps = "imps";
     std::string act = "action";
@@ -148,7 +152,7 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, MdpInfo &mdpInfo)
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)
 {
     arma::mat allPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
     arma::mat strategyPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);

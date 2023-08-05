@@ -178,6 +178,7 @@ void categoricalFeatureOneHotEncoding(arma::mat& armaData, MdpInfo& mdpInfo, std
 /*!
  * We create a matrix from the valueMap. We will use mdpInfo.imps to repeat data points.
  * Further we will fill out mdpInfo.featureMap an mdpInfo.actionIdentifierMap
+ * Warning: This function will modify the value map!
  * @param valueMap: map containing the variable names as keys and the corresponding vectors as values
  * @param mdpInfo: struct containing information about the MDP; we will add the feature names to the featureMap
  * @return: matrix containing the data points of the MDP (see data in develop.md for details)
@@ -205,9 +206,10 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
 
 /*!
  * The main function to create the training data from the value map
+ * Warning: This function will change the valueMap!
  * @param valueMap The value map containing all the state-action pairs
- * @param valueMap The value map containing the state-action pairs of the strategy
+ * @param valueMapSubMdp The value map containing the state-action pairs of the strategy
  * @param mdpInfo The MdpInfo object containing the information about the MDP
  * @return A pair of the training data and the labels.
  */
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map_submdp, MdpInfo& mdpInfo);
+std::pair<arma::mat, arma::Row<size_t>> createTrainingData(ValueMap& value_map, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
