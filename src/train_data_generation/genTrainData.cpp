@@ -9,6 +9,7 @@
 #include <storm/models/sparse/StandardRewardModel.h>
 #include <bits/stdc++.h>
 #include <iostream>
+#include <armadillo>
 
 void createMatrixHelper(arma::fmat &armaData, arma::frowvec &rowVec, std::variant<std::vector<int>, std::vector<bool>> &valueVector)
 {
@@ -45,13 +46,16 @@ void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, st
             mdpInfo.featureMap.insert(std::make_pair(i, "action"));
         }
 
-        // IntVector: each entry i corresponds to the actionIdentifier of the i-th data point
-        // Ee thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
+
+        // intVector: each entry i corresponds to the actionIdentifier of the i-th data point
+        // we thus set the entry of the row that corresponds to that actionIdentifier to 1 for the i-th data point
         for (int i = 0; i < ncols; ++i)
         {
             // As we store the stateIndex in the first row temporarily we add +1 to access a row i logically
             armaData.at((*intVector).at(i) + 1, i) = 1;
+
         }
+
     }
 }
 
@@ -145,10 +149,10 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
     return std::make_pair(trainData, labels_new);
 }
 
-std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMap, std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> &valueMapSubmdp, MdpInfo &mdpInfo)
+std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)
 {
     arma::fmat allPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
-    arma::fmat strategyPairsMat = createMatrixFromValueMap(valueMapSubmdp, mdpInfo);
+    arma::fmat strategyPairsMat = createMatrixFromValueMap(valueMapSubMdp, mdpInfo);
     arma::Row<size_t> labels = createDataLabels(allPairsMat, strategyPairsMat);
     return repeatDataLabels(allPairsMat, labels, mdpInfo);
 }
