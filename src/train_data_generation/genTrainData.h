@@ -124,7 +124,6 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
                 }
                 varIt.operator++();
             }
-            // TODO: was, wenn eine Variable aus dem PRISM code "action" heißt?
             auto key = "action";
             auto actionIdentifier = mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k);
             // insert key to value_map
@@ -159,21 +158,21 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
 
 /*!
  * we add a new row to the bottom of the matrix
- * @param armaData: the arma::mat to which we will add a rowVec
+ * @param armaData: the arma::fmat to which we will add a rowVec
  * @param rowVec: a dummy vector that will contain the valueVector but converted to double
  * @param valueVector: the vector that contains the values that we want to add to the matrix
  * 
 */
-void createMatrixHelper(arma::mat& armaData, arma::rowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
+void createMatrixHelper(arma::fmat& armaData, arma::frowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
 
 /*!
  * We add an n x n identity matrix to the bottom of the matrix, where n is mdpInfo.numOfActId
- * @param armaData: the arma::mat to which we will add an identity matrix  
+ * @param armaData: the arma::fmat to which we will add an identity matrix  
  * @param mdpInfo: the MdpInfo object that contains the featureMap; the dimension of each row that we add will be called "action"
  * @param valueVector: the vector that contains the action identifiers
 */
-void categoricalFeatureOneHotEncoding(arma::mat& armaData, MdpInfo& mdpInfo, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
+void categoricalFeatureOneHotEncoding(arma::fmat& armaData, MdpInfo& mdpInfo, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
 
 /*!
  * We create a matrix from the valueMap. We will use mdpInfo.imps to repeat data points.
@@ -183,7 +182,7 @@ void categoricalFeatureOneHotEncoding(arma::mat& armaData, MdpInfo& mdpInfo, std
  * @param mdpInfo: struct containing information about the MDP; we will add the feature names to the featureMap
  * @return: matrix containing the data points of the MDP (see data in develop.md for details)
  */
-arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, MdpInfo& mdpInfo);
+arma::fmat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& value_map, MdpInfo& mdpInfo);
 
 /*!
  * Create Labels for the allPairs matrix. 1 if the pair is in the strategy, 0 otherwise
@@ -191,7 +190,7 @@ arma::mat createMatrixFromValueMap(std::map<std::string, std::variant<std::vecto
  * @param strategyPairs: matrix containing the s-a pairs of the strategy
  * @return: vector containing the labels for the s-a pairs (1 if the pair is in the strategy, 0 otherwise)
  */
-arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs);
+arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPairs);
 
 /*! 
  * Repeat the data points according to the importance of the state (and remove the importance row)
@@ -202,7 +201,7 @@ arma::Row<size_t> createDataLabels(arma::mat &allPairs, arma::mat &strategyPairs
  *          the row vector contains the labels for the s-a pairs also repeated as often as the importance of the state.
  *
  */
-std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);
+std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);
 
 /*!
  * The main function to create the training data from the value map
@@ -212,4 +211,4 @@ std::pair<arma::mat, arma::Row<size_t>> repeatDataLabels(arma::mat data, arma::R
  * @param mdpInfo The MdpInfo object containing the information about the MDP
  * @return A pair of the training data and the labels.
  */
-std::pair<arma::mat, arma::Row<size_t>> createTrainingData(ValueMap& value_map, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
+std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap& value_map, ValueMap& value_map_submdp, MdpInfo& mdpInfo);

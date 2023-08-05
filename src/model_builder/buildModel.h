@@ -20,23 +20,23 @@
 
 /*!
  * Build the model and the formulas
- * @param: pathToPrismFile: path to the model file
- * @param: formulasAsString: the formula string
- * @param: constantDefinitionString: the constant definition string
+ * @param pathToPrismFile: path to the model file
+ * @param formulasAsString: the formula string
+ * @param constantDefinitionString: the constant definition string
  */
 std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::shared_ptr<storm::logic::Formula const>>> buildModelFormulas(
         std::string const& pathToPrismFile, std::string const& formulasAsString, std::string const& constantDefinitionString = "");
 
 /*!
  * Set up tasks for the model checking: here, produce a scheduler
- * @param: formulas: the formulas
+ * @param formulas: the formulas
  */
 std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTasks(
         std::vector<std::shared_ptr<storm::logic::Formula const>> const& formulas);
 
 /*!
  * Visualize a model: state & choice labels, transition matrix ...
- * @param: model: the model
+ * @param model: the model
  */
 template <typename MdpType>
 void modelVis(std::shared_ptr<MdpType>& model){

@@ -18,7 +18,7 @@ int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simul
     // Reset the visited vector to zero before each simulation
     std::fill(visited.begin(), visited.end(), 0);
     int state = simulator.getCurrentState();
-    for (int i = 0; i < l; i++) {
+    for (int i = 0; i < l; ++i) {
         if(finalStates.get(state)) {
             return 1; // We assume that final states are sink states
         }
@@ -38,17 +38,16 @@ std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models:
     int nstates = model.getNumberOfStates();
     std::vector<int> imps(nstates, 0);
     std::vector<int> visited(nstates, 0);
-    std::cout << "nstates: " << nstates << std::endl;
     storm::storage::BitVector finalStates = model.getStates(label);
 
-    for (int i = 0; i < C; i++) {
+    for (int i = 0; i < C; ++i) {
         // simulateRun returns 1 if we are in a final state - we loop until it returns 1 to get in total C simulations reaching the target
         int result = 0;
         do { 
             result = simulateRun(simulator, model, visited, l, finalStates);
         } while(!result);
         
-        for (int j = 0; j < nstates; j++) {
+        for (int j = 0; j < nstates; ++j) {
             assert(visited[j] == 0 || visited[j] == 1);
             imps[j] += visited[j];
             visited[j] = 0;

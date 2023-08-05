@@ -43,7 +43,7 @@ The cartesian product of the n-th entry of the vectors for every key and "action
 We further add the vector imps which is the id of the state, so that we can later repeat this state-action pair as often as needed.
 #### data
 ```cpp
-arma::mat data
+arma::fmat data
 ```
 This contains the state-action pairs in matrix format. 
 As arma is column-major, mlpack treats each column as a data point and each row as a dimension.
