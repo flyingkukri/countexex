@@ -37,7 +37,10 @@ Due to the size of the system ... certain requirements for running?
 - As we had to change the mlpack library, currently it needs to be built from source. See: [mlpack](https://github.com/mlpack/mlpack)
 - [mlpack dependencies](https://github.com/mlpack/mlpack#2-dependencies)
 - mklearn (on fedora mklearn-devel)
-
+- example for ubuntu
+```bash
+$ sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev
+```
 
 ### Cloning and Compiling
 ```bash
