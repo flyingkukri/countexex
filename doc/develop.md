@@ -24,7 +24,7 @@ The following is a schematic overview of the folder structure of our project.
 The folder app contains the main.cpp file.
 In the main.cpp file, the function pipeline is the main process. 
 Each folder in src contains a header and a cpp file.
-This contains library functions that get used by the pipeline.
+These contain library functions that get used by the pipeline.
 
 ### Important Data Structures
 #### value_map
@@ -51,6 +51,11 @@ The first row will contain the state id, then the following rows are a one-hot e
 The actions are one-hot encoded because, for categorical features, the decision tree isn't necessarily binary.
 We will have repeated each state-action pair as often as indicated by the importance vector.
 
+### model ValueType
+The ValueType of the model is restricted to double, as the permissive strategy computation expects this ValueType. Thus, the types *storm::RationalNumber* and *storm::RationalFunction* are currently not supported.
+
+### storm engine
+We are restricted to using Storm's [sparse engine](https://www.stormchecker.org/documentation/background/engines.html), due to a restriction of the permissive strategy computation, expecting a model of type *storm::models::sparse::Mdp<double, RM>*.
 
 
 ### main.cpp
@@ -61,7 +66,7 @@ The following flowchart gives a high-level overview of the pipeline process. We 
         id2[calculate maximum possibility p of reaching goal states]
         id3["calcuate permissive strategy for P >= p [F s]"]
         id4[calculate importance]
-        id5[create value_map of from mdp]
+        id5[create value_map of mdp]
         id6[create data matrix and labels vector from value_map]
         id7[construct decision tree]
         id1 --> id2
@@ -113,7 +118,22 @@ Furthermore, we have added storm as a submodule to our git project and use the c
 
 Lastly, we use Catch2 to unit test our project.
 ## Setup
-In order to be able to debug the system set the option *STORM_DEVELOPER* to *ON* in **/countexex/storm/CMakeLists.txt**
+In order to be able to debug the system set the option *STORM_DEVELOPER* to *ON* in */countexex/storm/CMakeLists.txt*.
 ## Extending countexex
-### Supporting New Objectives
-Currently, only reachability objectives are supported ...
+### Supporting new objectives
+Currently, only reachability objectives are supported. Supporting different objectives requires further changes. The importance computation has to be adapted to the new objective as well as the permissive strategy computation, as it expects as input an “eventually” formula.
+
+### Supporting new input types
+At the moment, only PRISM input files are supported. In order to extend the support to, e.g., Jani input files, the function *buildModelFormulas()* in "countexex/src/model_builder/" has to be changed. In particular, instead of calling parseProgram(), which parses PRISM programs, we would need to call different parse functions depending on the input file format e.g., *parseJaniModel()*. Additionally, it has to be checked, which variable types the new format supports. As PRISM only handles integer and boolean variables, the tool only supports those data types. Thus, the functions in "countexex/src/train_data_generation/", and in particular the *ValueMap*, have to be extended to support additional data types.
+
+### Supporing parametric model checking
+Here again, the permissive strategy computation is the limiting factor, as it expects an MDP of value type *double*, while a parametric model has type *storm::RationalFunction*.
+
+### Soft learning option for multiple-action states vs. single-action states
+As we allow a state to be coupled with multiple actions in the liberal strategy, there might be states for which only one action is included, while for others multiple actions are included. Thus, in the learning, there might be more emphasis on states that have multiple actions. In order to compensate for that, states with only a single action could be repeated c-times in the training-data, where c is a constant.
+
+### Permissive strategy computation
+Currently, the permissive strategy computation is the bottleneck of the tool. For models containing a few thousand states, the computation finishes quickly. However, for huge models, such as the Zeroconf Protocol, having about 300 thousand states, the computation does not finish after 6 hours. Storm provides two implementations using either Mixed Integer Linear Programming (MILP) or Satisfiability Modulo Theories (SMT). Both approaches did not finish after a reasonable time. Therefore, one might consider providing a different implementation for computing the liberal strategy, e.g., using value iteration. 
+
+### Categorical data type handling
+By default, the split type for categorical data types in mlpack's decision tree learning is "AllCategoricalSplit". This split type creates one child for each category. The categories represent the actions, which in turn represent the commands from the PRISM file. As the amount of actions can grow very large, we did not want to force one child for each category. Therefore, we use a one-hot-encoding, to treat each category as a numeric feature. As this in turn can lead to cascades of actions within the tree, one might consider an intermediate solution. Therefore, a new split type class would have to be implemented in mlpack replacing the default "AllCategoricalSplit", providing the desired splitting behavior.
