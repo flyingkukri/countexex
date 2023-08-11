@@ -4,15 +4,15 @@ Further information on how to customize and extend countexex can be found in the
 
 ## Capabilities - What is countexex?
 Counterexample Explanation (Countexex) is a tool that allows comprehensible representations of strategies using decision trees.
-Given a probabilistic and non-deterministic system, modeled as Markov Decision Process (MDP), and a property to be checked via a model checker, we need strategies in order to resolve the non-determinism, indicating which action to take in each state. The strategy might act as a counterexample, providing information on how to reach an error state, or could be a synthesized strategy. Due to the nature of the system (probabilistic AND non-deterministic) those strategies easily grow very large and incomprehensible. Countexex implements the approach presented in [this paper](https://link.springer.com/chapter/10.1007/978-3-319-21690-4_10) to reduce the size of strategies and provide a succinct representation using decision tree learning. 
+Given a probabilistic and non-deterministic system, modeled as Markov Decision Process (MDP), and a property to be checked via a model checker, we need strategies in order to resolve the non-determinism, indicating which action to take in each state. The strategy might act as a counterexample, providing information on how to reach error states, or could be a synthesized strategy. Due to the nature of the system (probabilistic AND non-deterministic) those strategies easily grow very large and incomprehensible. Countexex implements the approach presented in [this paper](https://link.springer.com/chapter/10.1007/978-3-319-21690-4_10) to reduce the size of strategies and provide a succinct representation using decision tree learning. 
 
 The approach is threefold:
 
 1. **Compute liberal, &epsilon;-optimal strategy:**  
-    We allow multiple actions to be chosen for each state to give the learning algorithm more freedom.
+    We allow multiple, equally good actions to be chosen for each state to give the learning algorithm more freedom. Additionally, we apply a maximal end component (MEC) decomposition on the MDP. If a state is an exit, we only select maximal-external state-action pairs for that state. More information on the definitions can be found [here](https://link.springer.com/chapter/10.1007/978-3-319-21690-4_10).  
 
 2. **Compute importance of states:**  
-    We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
+    We simulate 10,000 runs on the MDP under the strategy and count how often each state was reached. This importance value determines how frequently the state-action pairs will occur in the training data. Therefore, states that do not lead to a target state get an importance value of zero, thereby reducing the amount of relevant states.
 
 3. **Learn a decision tree representation of the strategy:**   
     In the last step, we apply a decision tree learning algorithm on the modified strategy. Via tuning parameters, we are able to influence the size of the resulting tree further, in order to obtain a succinct representation.
@@ -28,7 +28,7 @@ As countexex is based on the model checker storm, the support is limited to the 
 
 For updates see: [Storm](https://www.stormchecker.org/documentation/obtain-storm/build.html).
 
-We have tested the installation on Linux and Fedora.
+We have tested the installation on Linux Ubuntu and Fedora.
 
 ## Building
 ### Dependencies
@@ -41,8 +41,9 @@ $ sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev lib
 ```
 
 ### Cloning and Compiling
+In the following, use *--recursive* in order to clone the submodules. Additionally, the project has to be cloned via SSH-URL. 
+
 ```bash
-# Use --recursive to clone the submodules; ssh required
 git clone git@github.com:flyingkukri/countexex.git --recursive
 mkdir build
 cd build
@@ -55,12 +56,12 @@ Due to the size of the project the compilation time is long. For a speedup use
 make -j${NUMBER_OF_CORES}
 ```
 
-if you have multiple cores and at least **8GB** of memory.
+if you have multiple cores and at least *8GB* of memory.
 
 ## Running
 
 ### Command Line Interface
-Check if the installation was successful: The executable countexex is located in the folder **{PathToCountexex}/countexex/build/app/**. Execute the following command:
+Check if the installation was successful: The executable countexex is located in the folder *PathToCountexex/build/app/*, where PathToCountexex refers to the root directory of the project. Execute the following command:
 ```bash
 ./countexex -h
 ```
@@ -78,7 +79,7 @@ Check task:
   -m [ --model ] arg                    Required argument: Path to model file. 
                                         Model has to be in PRISM format: e.g., 
                                         model.nm
-  -p [ --propertyMax ] arg              Required argument: Specify wether you 
+  -p [ --propertyMax ] arg              Required argument: Specify whether you 
                                         want to check Pmax or Pmin. Set the 
                                         argument to max or min accordingly.
 
@@ -114,7 +115,7 @@ Pmax=? [ F "goal" ]
 Pmin=? [ F "goal" ]
 ```
 
-Therefore, the user only has to specify via *propertyMax* wether Pmax or Pmin should be checked.
+Therefore, the user only has to specify via *propertyMax* whether Pmax or Pmin should be checked.
 Additionally, the set of states for which we want to check the reachability has to be labeled as 'goal'. This can be achieved by adding a label, as shown below, at the bottom of the model file:
 
 ```
@@ -130,7 +131,7 @@ In case you want to change them, you have two options:
 1. Options specified via command line:
 
 ```bash
-./countexex --model "{PathToModelFile}/cicle.nm" --property "{PathToPropertyFile}/default.props" -l 1 -d 100 -i 0.01
+./countexex --model "PathToCountexex/examples/cycle.nm" --propertyMax max -l 1 -d 100 -i 0.01
 ```
 
 2. Options specified via config file: 
@@ -145,7 +146,7 @@ importanceDelta = 0.01
 
 Then run: 
 ```bash
-./countexex --model "{PathToModelFile}/cicle.nm" --property "{PathToPropertyFile}/default.props" -c "{PathToConfigFile}/config.txt"
+./countexex --model "PathToCountexex/examples/cycle.nm" --propertyMax max -c "PathToConfig/config.txt"
 ```
 
 ### Configurable options
@@ -153,14 +154,14 @@ Then run:
 For more information on the decision tree learning parameters see: [mlpack DecisionTree](https://mlpack.org/doc/mlpack-3.3.1/doxygen/classmlpack_1_1tree_1_1DecisionTree.html).
 
 
-**ImportanceDelta**: we compute for each state an importance value **Imp_s**, that indicates how often this state is repeated in the training data. However, if **Imp_s** is below a certain threshold, **importanceDelta**, we will simply discard this state. Depending on your model structure and set of target states, you might want to change this parameter defaulting to 0.001. 
+**ImportanceDelta**: we compute for each state an importance value *Imp_s*, that indicates how often this state is repeated in the training data. However, if *Imp_s* is below a certain threshold, *importanceDelta*, we will simply discard this state. Depending on your model structure and set of target states, you might want to change this parameter defaulting to 0.001. 
 
 **safetyPrec**: the permissive strategy computation expects safety properties of the following form:  
 for propertyMax = max:  P >= Pmax [F s]  
-We therefore need to convert Pmax to a string with a fixed number of decimal places, which is specified by **safetyPrec**. Depending on the expected value of Pmax you might want to change safetyPrec, e.g., to a higher value for very small values of Pmax.  
+We therefore need to convert Pmax to a string with a fixed number of decimal places, which is specified by *safetyPrec*. Depending on the expected value of Pmax you might want to change safetyPrec, e.g., to a higher value for very small values of Pmax.  
 
 ## Reading the output
-The decision tree is located in the folder **{PathToCountexex}/countexex/build/app/graph.dot** as a **DOT file** and can be converted to a pdf via the command 
+The decision tree is stored as a DOT file named *graph.dot* within the "build/app/" folder and can be converted to a pdf via the command 
 ```bash
 dot -Tpdf graph.dot -o graph.pdf
 ```

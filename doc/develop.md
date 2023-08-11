@@ -33,29 +33,29 @@ typedef std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>
 ValueMap value_map
 ```
 This data structure is our representation of the state-action pairs. 
-it is a map from a string that is either 
+It is a map from a string that is either 
 1. the name of a variable (or dimension in mlpack)
 2. "action"
 3. "imps"
 
 to a vector of values. 
-The cartesian product of the n-th entry of the vectors for every key and "action" constitutes a state-action pair.
-We further add the vector imps which is the id of the state, so that we can later repeat this state-action pair as often as needed.
+The Cartesian product of the n-th entry of the vectors for every key and "action" constitutes a state-action pair.
+We further add the vector imps which is the ID of the state, so that we can later repeat this state-action pair as often as needed.
 #### data
 ```cpp
 arma::fmat data
 ```
 This contains the state-action pairs in matrix format. 
 As arma is column-major, mlpack treats each column as a data point and each row as a dimension.
-The first row will contain the state id, then the following rows are a one-hot encoding of the actions. 
+The first row will contain the state ID, then the following rows are a one-hot encoding of the actions. 
 The actions are one-hot encoded because, for categorical features, the decision tree isn't necessarily binary.
 We will have repeated each state-action pair as often as indicated by the importance vector.
 
-### model ValueType
+#### model ValueType
 The ValueType of the model is restricted to double, as the permissive strategy computation expects this ValueType. Thus, the types *storm::RationalNumber* and *storm::RationalFunction* are currently not supported.
 
-### storm engine
-We are restricted to using Storm's [sparse engine](https://www.stormchecker.org/documentation/background/engines.html), due to a restriction of the permissive strategy computation, expecting a model of type *storm::models::sparse::Mdp<double, RM>*.
+#### storm engine
+We are restricted to using Storm's [sparse engine](https://www.stormchecker.org/documentation/background/engines.html), as the permissive strategy computation expects a model of type *storm::models::sparse::Mdp<double, RM>*.
 
 
 ### main.cpp
@@ -77,12 +77,12 @@ The following flowchart gives a high-level overview of the pipeline process. We 
         id6 --> id7
 
 ```
-After setting up the model of type storm::models::sparse::Mdp<double>, we calculate the maximum possible probability of reaching our goal states, because for calculating a permissive strategy, for need a formula of the form P >= p [F s].
+After setting up the model of type storm::models::sparse::Mdp<double>, we calculate the maximum possible probability of reaching our goal states, because for calculating a permissive strategy, we need a formula of the form P >= p [F s].
 
 After this, we calculate the importance using calculateImps from importance_calculation/impCalc.cpp.
 
-Then the pipeline calls createStateActionPairs from genTrainData.cpp to convert the state-actions pairs of the MDP into the value_map.
-Finally the function createTrainingData in genTrainData.cpp converts this value map into a matrix and label pair that we can use as input for the decision tree.
+Then, the pipeline calls createStateActionPairs from genTrainData.cpp to convert the state-actions pairs of the MDP into the value_map.
+Finally, the function createTrainingData in genTrainData.cpp converts this value map into a matrix and label pair that we can use as input for the decision tree.
 
 ### genTrainData.cpp
 In this section, we will give an overview of the relationship between the functions in genTrainData.cpp.
@@ -111,20 +111,20 @@ The purpose of these functions is as helpers for the createTrainingData.cpp func
 ```
 
 ## CMake structure
-We have included mlpack as an ExternalProject because we need the feature of accessing the ClassProbabilities vector to visualise the tree.
-This feature is already in the master however not yet in most common distributions.
+We have included mlpack as an ExternalProject because we need the feature of accessing the ClassProbabilities vector to visualize the tree.
+This feature is already in the master, however not yet in most common distributions.
 
-Furthermore, we have added storm as a submodule to our git project and use the cmake library that it creates directly because we have modified the calculation of the strategy.
+Furthermore, we have added storm as a submodule to our git project and use the CMake library that it creates directly because we have modified the calculation of the strategy.
 
 Lastly, we use Catch2 to unit test our project.
 ## Setup
-In order to be able to debug the system set the option *STORM_DEVELOPER* to *ON* in */countexex/storm/CMakeLists.txt*.
+In order to be able to debug the system, set the option *STORM_DEVELOPER* to *ON* in *countexex/storm/CMakeLists.txt*.
 ## Extending countexex
 ### Supporting new objectives
 Currently, only reachability objectives are supported. Supporting different objectives requires further changes. The importance computation has to be adapted to the new objective as well as the permissive strategy computation, as it expects as input an “eventually” formula.
 
 ### Supporting new input types
-At the moment, only PRISM input files are supported. In order to extend the support to, e.g., Jani input files, the function *buildModelFormulas()* in "countexex/src/model_builder/" has to be changed. In particular, instead of calling parseProgram(), which parses PRISM programs, we would need to call different parse functions depending on the input file format e.g., *parseJaniModel()*. Additionally, it has to be checked, which variable types the new format supports. As PRISM only handles integer and boolean variables, the tool only supports those data types. Thus, the functions in "countexex/src/train_data_generation/", and in particular the *ValueMap*, have to be extended to support additional data types.
+At the moment, only PRISM input files are supported. In order to extend the support to, e.g., Jani input files, the function *buildModelFormulas()* in *src/model_builder/* has to be changed. In particular, instead of calling *parseProgram()*, which parses PRISM programs, we would need to call different parse functions depending on the input file format e.g., *parseJaniModel()*. Additionally, it has to be checked, which variable types the new format supports. As PRISM only handles integer and boolean variables, the tool only supports those data types. Thus, the functions in *src/train_data_generation/*, and in particular the *ValueMap*, have to be extended to support additional data types.
 
 ### Supporing parametric model checking
 Here again, the permissive strategy computation is the limiting factor, as it expects an MDP of value type *double*, while a parametric model has type *storm::RationalFunction*.
