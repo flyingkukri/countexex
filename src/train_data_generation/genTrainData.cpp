@@ -71,17 +71,17 @@ arma::fmat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 
     // Make sure imps is the first row in the matrix
     auto it = valueMap.find(imps);
-    std::variant<std::vector<int>, std::vector<bool>> &valueVector = it->second;
     if (it != valueMap.end())
     {
+        std::variant<std::vector<int>, std::vector<bool>> valueVector = it->second;
         createMatrixHelper(armaData, rowVec, valueVector);
     } // No entry in featureMap for imps as this row will be removed from the matrix for training
 
     // One-hot encoding for the categorical action features
     it = valueMap.find(act);
-    valueVector = it->second;
     if (it != valueMap.end())
     {
+        std::variant<std::vector<int>, std::vector<bool>> valueVector = it->second;
         categoricalFeatureOneHotEncoding(armaData, mdpInfo, valueVector);
     }
 
@@ -92,7 +92,7 @@ arma::fmat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
         // Get the vector corresponding to the key
         if (pair.first != "imps" && pair.first != "action")
         {
-            valueVector = pair.second;
+            std::variant<std::vector<int>, std::vector<bool>> valueVector = pair.second;
             createMatrixHelper(armaData, rowVec, valueVector);
             mdpInfo.featureMap.insert(std::make_pair(featureIndex, pair.first));
             featureIndex += 1;

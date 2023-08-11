@@ -44,17 +44,14 @@ std::vector<int> calculateImps(storm::models::sparse::Mdp<double, storm::models:
     storm::storage::BitVector finalStates = model.getStates(label);
 
     for (int i = 0; i < c; ++i) {
-        // simulateRun returns 1 if we are in a final state - we loop until it returns 1 to get in total C simulations reaching the target
+        // simulateRun returns 1 if we are in a final state
         seed = random();
-        int result = 0;
-        do { 
-            result = simulateRun(simulator, model, visited, l, finalStates, seed);
-        } while(!result);
-        
-        for (int j = 0; j < nStates; ++j) {
-            assert(visited[j] == 0 || visited[j] == 1);
-            imps[j] += visited[j];
-            visited[j] = 0;
+        if(simulateRun(simulator, model, visited, l, finalStates, seed)){
+            for (int j = 0; j < nStates; ++j) {
+                assert(visited[j] == 0 || visited[j] == 1);
+                imps[j] += visited[j];
+                visited[j] = 0;
+            }
         }
     }
 

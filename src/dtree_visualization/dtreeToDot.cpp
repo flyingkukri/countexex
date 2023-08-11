@@ -7,20 +7,25 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
     // Print this node.
     output << "node" << nodeIndex << " [label=\"";
     auto isCategorical = false;
+
     // This is a leaf node.
     if (dt.NumChildren() == 0){
         // In this case classProbabilities will hold the information for the
         // probabilites of each class.
         auto probs = dt.ClassProbabilities();
+        
         int maxClass = probs.index_max();
         output << (maxClass ? "good" : "bad") << "\\n";
+
     } else { // This is a splitting node.
         // If the node isn't a leaf, getClassProbabilities() returns the splitinfo
         auto featureNumber = dt.SplitDimension();        
         auto it = mdpInfo.featureMap.find(featureNumber);
+
         if( it != mdpInfo.featureMap.end()){
             // Get the feature variable 
             output << it->second;
+
             if(featureNumber<mdpInfo.numOfActId){ // categorical feature
                 // Get action represented by featureNumber due to one-hot-encoding
                 isCategorical = true;
@@ -30,19 +35,22 @@ int printTreeToDotHelp(mlpack::DecisionTree<>& dt, std::ofstream& output, size_t
                     act = it->second;
                 }
                 output << " = [" << act << "]";
+                
             }else{ // numeric feature:  
-                // Currently only int and bool types are supported,
-                // thus we can simply round down the splitter without checking the type of the variable
+                // Currently, only int and bool types are supported.
+                // Thus, we can simply round down the splitter without checking the type of the variable
                 output << " <= " << std::floor(dt.ClassProbabilities()[0]);
             }
         }
     }
 
     output << "\"];\n";
+
     // Recurse to children.
     int highestIndex = nodeIndex;
-    // We always have two childeren as we have only numeric data and therefore always perform the best_binary_numeric_split
-    // Child zero is the left child: indicating point <= splitInfo
+
+    // We always have two childeren, as we have only numeric data and therefore always perform the best_binary_numeric_split
+    // Child zero is reached if: data <= splitInfo
     for (size_t i = 0; i < dt.NumChildren(); ++i)
     {
         output << "node" << nodeIndex << " -> node" << (highestIndex + 1);
