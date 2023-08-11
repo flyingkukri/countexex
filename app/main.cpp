@@ -43,93 +43,10 @@
 
 namespace po = boost::program_options;
 
-void pipeline(std::string const& pathToModel, bool propertyMax, config  const& conf, DtConfig& dtConfig, bool verbose) {
-
-    std::string label = "goal";
-    std::string formulaString = (propertyMax ? std::string("Pmax=? ") : std::string("Pmin=? ")) + "[ F \"" + label + " \"];";
-
-    // Setup: Build model, environment and check tasks
-    auto env = setUpEnv();
-    auto modelFormulas = buildModelFormulas(pathToModel, formulaString);
-    auto mdp = std::move(modelFormulas.first);
-    auto tasks = getTasks(modelFormulas.second);
-
-    // Check max/min property
-    storm::modelchecker::SparseMdpPrctlModelChecker<storm::models::sparse::Mdp<double>> checkerOriginalTask(*mdp);
-    std::unique_ptr<storm::modelchecker::CheckResult> checkResult = checkerOriginalTask.check(env, tasks[0]);
-    auto stateValueVector = checkResult->asExplicitQuantitativeCheckResult<double>().getValueVector();
-
-    // Generate safety property string for permissive scheduler from initStateCheckResult:
-    auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
-    std::string safetyProp = generateSafetyProperty(formulaString, initStateCheckResult, propertyMax, conf.prec);
-    if(verbose){
-        std::cout << "Safety Property: " << safetyProp << std::endl;
-    }
-
-    // Generate safety property model and formula
-    auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
-    auto safetyMdp = std::move(modelSafetyProp.first);
-    auto formula = modelSafetyProp.second;
-
-    // Produce permissive scheduler
-    boost::optional<storm::ps::SubMDPPermissiveScheduler<>> permissive_scheduler = storm::ps::computePermissiveSchedulerViaSMT<>(*safetyMdp, formula);
-    if(verbose){
-        std::cout << "Is the permissive scheduler initialized? " << (permissive_scheduler.is_initialized() ? "Yes" : "No") << std::endl;
-    }
+int initializeOptions(int argc, char *argv[], std::string& model, bool& max, bool& verbose, config& conf, DtConfig& dtConfig){
     
-    // Apply scheduler on safetyMdp to obtain submdp on which we run the simulations
-    auto submdp = permissive_scheduler->apply();
-    auto submdpPtr = std::make_shared<decltype(submdp)>(submdp);
-
-    // Simulate C runs on submdp to approximate importance of states
-    int l, c, delta;
-    l = conf.l;
-    c = conf.c;
-    delta = c*conf.delta;
-
-    MdpInfo mdpInfo;
-    mdpInfo.imps = calculateImps(submdp, l, c, delta, label);
-    
-    // Create training data: Repeat the samples importance times
-    auto valueMap = createStateActPairs<storm::models::sparse::Mdp<double>>(safetyMdp, mdpInfo);
-    mdpInfo.numOfActId = safetyMdp->getChoiceOrigins()->getNumberOfIdentifiers();
-    auto valueMapSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdpPtr, mdpInfo);
-    if(verbose){
-        std::cout << "Created value map" << std::endl;
-    }
-
-    auto result = createTrainingData(valueMap, valueMapSubmdp, mdpInfo);
-    if(verbose){
-        std::cout << "Created training data" << std::endl;
-    }
-    auto allPairs = result.first;
-    auto labels = result.second;
-
-    // DT learning
-    mlpack::DecisionTree<> dt(allPairs, labels,2, dtConfig.minimumLeafSize, dtConfig.minimumGainSplit, dtConfig.maximumDepth);
-
-    // Visualize the tree
-    std::ofstream file;
-    file.open ("graph.dot");
-    printTreeToDot(dt, file, mdpInfo);
-    file.close();
-}
-
-int main (int argc, char *argv[]) {
-    // Arguments
-    std::string model;
-    bool max=true;
-    bool verbose = false;
-    
-    config conf;
     conf.c = 10000;
     conf.l = 10000;
-
-    // Init loggers
-    storm::utility::setUp();
-
-    // Set some settings objects.
-    storm::settings::initializeAll("countexex", "countexex");
 
     // Declare the supported CL options.
     po::options_description generic("General");
@@ -140,7 +57,7 @@ int main (int argc, char *argv[]) {
     po::options_description input("Check task");
     input.add_options()
     ("model,m", po::value<std::string>(), "Required argument: Path to model file. Model has to be in PRISM format: e.g., model.nm")
-    ("propertyMax,p", po::value<std::string>(), "Required argument: Specify wether you want to check Pmax or Pmin. Set the argument to max or min accordingly.");
+    ("propertyMax,p", po::value<std::string>(), "Required argument: Specify whether you want to check Pmax or Pmin. Set the argument to max or min accordingly.");
 
     po::options_description configuration("Configuration arguments");
     configuration.add_options()
@@ -226,7 +143,99 @@ int main (int argc, char *argv[]) {
 
     conf.delta = vm["importanceDelta"].as<double>();
     conf.prec = vm["safetyPrec"].as<int>();
-    DtConfig dtConfig = {vm["minimumGainSplit"].as<double>(), vm["minimumLeafSize"].as<size_t>(), vm["maximumDepth"].as<size_t>()};
+    dtConfig = {vm["minimumGainSplit"].as<double>(), vm["minimumLeafSize"].as<size_t>(), vm["maximumDepth"].as<size_t>()};
+    return 1;
+}
+
+void pipeline(std::string const& pathToModel, bool propertyMax, config  const& conf, DtConfig& dtConfig, bool verbose) {
+
+    std::string label = "goal";
+    std::string formulaString = (propertyMax ? std::string("Pmax=? ") : std::string("Pmin=? ")) + "[ F \"" + label + " \"];";
+
+    // Setup: Build model, environment and check tasks
+    auto env = setUpEnv();
+    auto modelFormulas = buildModelFormulas(pathToModel, formulaString);
+    auto mdp = std::move(modelFormulas.first);
+    auto tasks = getTasks(modelFormulas.second);
+
+    // Check max/min property
+    storm::modelchecker::SparseMdpPrctlModelChecker<storm::models::sparse::Mdp<double>> checkerOriginalTask(*mdp);
+    std::unique_ptr<storm::modelchecker::CheckResult> checkResult = checkerOriginalTask.check(env, tasks[0]);
+    auto stateValueVector = checkResult->asExplicitQuantitativeCheckResult<double>().getValueVector();
+
+    // Generate safety property string for permissive scheduler from initStateCheckResult:
+    auto initStateCheckResult = checkResult->asExplicitQuantitativeCheckResult<double>()[*mdp->getInitialStates().begin()];
+    std::string safetyProp = generateSafetyProperty(formulaString, initStateCheckResult, propertyMax, conf.prec);
+    if(verbose){
+        std::cout << "Safety Property: " << safetyProp << std::endl;
+    }
+
+    // Generate safety property model and formula
+    auto modelSafetyProp = buildModelForSafetyProperty(pathToModel, safetyProp);
+    auto safetyMdp = std::move(modelSafetyProp.first);
+    auto formula = modelSafetyProp.second;
+
+    // Produce permissive scheduler
+    boost::optional<storm::ps::SubMDPPermissiveScheduler<>> permissive_scheduler = storm::ps::computePermissiveSchedulerViaSMT<>(*safetyMdp, formula);
+    if(verbose){
+        std::cout << "Is the permissive scheduler initialized? " << (permissive_scheduler.is_initialized() ? "Yes" : "No") << std::endl;
+    }
+    
+    // Apply scheduler on safetyMdp to obtain submdp on which we run the simulations
+    auto submdp = permissive_scheduler->apply();
+    auto submdpPtr = std::make_shared<decltype(submdp)>(submdp);
+
+    // Simulate C runs on submdp to approximate importance of states
+    int l, c, delta;
+    l = conf.l;
+    c = conf.c;
+    delta = c*conf.delta;
+
+    MdpInfo mdpInfo;
+    mdpInfo.imps = calculateImps(submdp, l, c, delta, label);
+    
+    // Create training data: Repeat the samples importance times
+    auto valueMap = createStateActPairs<storm::models::sparse::Mdp<double>>(safetyMdp, mdpInfo);
+    mdpInfo.numOfActId = safetyMdp->getChoiceOrigins()->getNumberOfIdentifiers();
+    auto valueMapSubmdp = createStateActPairs<storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>>(submdpPtr, mdpInfo);
+    if(verbose){
+        std::cout << "Created value map" << std::endl;
+    }
+
+    auto result = createTrainingData(valueMap, valueMapSubmdp, mdpInfo);
+    if(verbose){
+        std::cout << "Created training data" << std::endl;
+    }
+    auto allPairs = result.first;
+    auto labels = result.second;
+
+    // DT learning
+    mlpack::DecisionTree<> dt(allPairs, labels,2, dtConfig.minimumLeafSize, dtConfig.minimumGainSplit, dtConfig.maximumDepth);
+
+    // Visualize the tree
+    std::ofstream file;
+    file.open ("graph.dot");
+    printTreeToDot(dt, file, mdpInfo);
+    file.close();
+}
+
+int main (int argc, char *argv[]) {
+    // Init loggers
+    storm::utility::setUp();
+
+    // Set some settings objects.
+    storm::settings::initializeAll("countexex", "countexex");
+    
+    // Set up CL Options
+    std::string model;
+    bool max=true;
+    bool verbose = false;    
+    config conf;
+    DtConfig dtConfig;
+    if(!initializeOptions(argc, argv, model, max, verbose, conf, dtConfig))
+    {
+        return 0;
+    }
 
     // Start the pipeline
     pipeline(model, max, conf, dtConfig, verbose);
