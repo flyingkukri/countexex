@@ -35,6 +35,7 @@ We have tested the installation on Linux Ubuntu and Fedora.
 - [Storm dependencies](https://www.stormchecker.org/documentation/obtain-storm/dependencies.html#general-dependencies)
 - [mlpack dependencies](https://github.com/mlpack/mlpack#2-dependencies)
 - mklearn (on fedora mklearn-devel)
+- Install the [Gurobi solver](https://www.gurobi.com/) if you want to use MILP. For Linux systems, you can follow this [guide](https://ca.cs.uni-bonn.de/doku.php?id=tutorial:gurobi-install)
 - example for ubuntu
 ```bash
 $ sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev
@@ -55,8 +56,10 @@ Due to the size of the project the compilation time is long. For a speedup use
 ```bash
 make -j${NUMBER_OF_CORES}
 ```
+if you have multiple cores and at least *8GB* of memory.  
 
-if you have multiple cores and at least *8GB* of memory.
+In order to be able to debug the system, set the option *STORM_DEVELOPER* to *ON* in *countexex/storm/CMakeLists.txt*.
+If you want to use the Gurobi solver that is not shipped with Storm, you need to additionally enable *STORM_USE_GUROBI* and set the path in *GUROBI_ROOT*. Thereafter, execute make.
 
 ## Running
 
@@ -99,6 +102,10 @@ Configuration arguments:
                                         importance calculation.
   -s [ --safetyPrec ] arg (=16)         Set the precision for the safety 
                                         property bound.
+  -o [ --optimizer ] arg (=smt)         Choose the method for computing the 
+                                        permissive strategy: smt or milp. Note 
+                                        that for MILP, you need to have Gurobi 
+                                        installed.
 ```
 
 ### Input format
@@ -159,6 +166,9 @@ For more information on the decision tree learning parameters see: [mlpack Decis
 **safetyPrec**: the permissive strategy computation expects safety properties of the following form:  
 for propertyMax = max:  P >= Pmax [F s]  
 We therefore need to convert Pmax to a string with a fixed number of decimal places, which is specified by *safetyPrec*. Depending on the expected value of Pmax you might want to change safetyPrec, e.g., to a higher value for very small values of Pmax.  
+
+**optimizer**: This option allows selecting the computation method for the permissive strategy. In certain cases, when using the SMT method with some models, an error indicating an empty expression list can occur. In such situations, we recommend switching to the MILP method. Note that this switch requires the Gurobi solver to be installed on your system.  
+
 
 ## Reading the output
 The decision tree is stored as a DOT file named *graph.dot* within the "build/app/" folder and can be converted to a pdf via the command 
