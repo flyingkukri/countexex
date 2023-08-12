@@ -111,4 +111,5 @@ module station2
 	[time] (s2 = 12) -> 1 : (s2' = 12);
 endmodule
 
+label "goal" = (col=2);
 label "twoCollisions" = (col = 2);

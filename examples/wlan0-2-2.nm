@@ -214,6 +214,8 @@ station2=station1[x1=x2,
 endmodule
 // ---------------------------------------------------------------------------- //
 
+
+label "goal" = ((col=2) | (col=4) | (col=6));
 label "twoCollisions" = col=2;
 label "fourCollisions" = col=4;
 label "sixCollisions" = col=6;
