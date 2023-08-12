@@ -4,7 +4,6 @@
 #include <storm-parsers/api/storm-parsers.h>
 #include <storm-parsers/parser/PrismParser.h>
 #include <storm/storage/prism/Program.h>
-#include <storm/storage/sparse/PrismChoiceOrigins.h>
 #include <storm-parsers/parser/FormulaParser.h>
 #include "storm/environment/solver/MinMaxSolverEnvironment.h"
 #include <array>
@@ -14,7 +13,6 @@
 #include <storm/models/sparse/Mdp.h>
 #include <storm/modelchecker/prctl/SparseMdpPrctlModelChecker.h>
 #include <bits/stdc++.h>
-//#include "main.h"
 #include "buildModel.h"
 #include <iostream>
 

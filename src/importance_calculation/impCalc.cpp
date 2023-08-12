@@ -12,7 +12,7 @@
 #include <storm/models/sparse/StandardRewardModel.h>
 
 int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator,
-                storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates, int currentSeed) {
+                storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>& model, std::vector<int>& visited, int l, storm::storage::BitVector& finalStates, int currentSeed) {
     simulator.setSeed(currentSeed);
     // Reset the visited vector to zero before each simulation
     std::fill(visited.begin(), visited.end(), 0);

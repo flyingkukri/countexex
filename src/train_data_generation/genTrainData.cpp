@@ -1,14 +1,8 @@
 #include "genTrainData.h"
 #include <random>
-#include <storm-parsers/parser/PrismParser.h>
-#include <storm/storage/prism/Program.h>
 #include <storm/utility/initialize.h>
-#include "storm/environment/solver/MinMaxSolverEnvironment.h"
 #include <array>
-#include <storm/environment/Environment.h>
-#include <storm/models/sparse/StandardRewardModel.h>
 #include <bits/stdc++.h>
-#include <iostream>
 #include <armadillo>
 
 void createMatrixHelper(arma::fmat &armaData, arma::frowvec &rowVec, ValueVector &valueVector)

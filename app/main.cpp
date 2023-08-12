@@ -1,44 +1,22 @@
-#include <cstdint>
-#include <cstdlib>
 #include <numeric>
 #include <random>
-#include <storm/api/storm.h>
-#include <storm-parsers/api/storm-parsers.h>
-#include <storm-parsers/parser/PrismParser.h>
-#include <storm/storage/prism/Program.h>
-#include <storm/storage/sparse/PrismChoiceOrigins.h>
 #include <storm/modelchecker/results/CheckResult.h>
-#include <storm/modelchecker/results/ExplicitQuantitativeCheckResult.h>
 #include <storm/utility/initialize.h>
-#include "storm/environment/solver/MinMaxSolverEnvironment.h"
-#include <array>
-#include <storm-parsers/parser/FormulaParser.h>
 #include <storm-permissive/analysis/PermissiveSchedulers.h>
 #include <storm/builder/ExplicitModelBuilder.h>
 #include <storm/environment/Environment.h>
 #include <storm/models/sparse/Mdp.h>
 #include <storm/modelchecker/prctl/SparseMdpPrctlModelChecker.h>
 #include <storm/models/sparse/StandardRewardModel.h>
-#include <storm-permissive/analysis/PermissiveSchedulerPenalty.h>
-#include <storm-permissive/analysis/PermissiveSchedulers.h>
-#include <bits/stdc++.h>
 #include "main.h"
 #include "buildModel.h"
 #include <iostream>
-#include <iomanip>
-#include <sstream>
 #include <fstream>
 #undef As
-#include <mlpack.hpp>
-#include <mlpack/core.hpp>
-#include <mlpack/core/data/load.hpp>
-#include <mlpack/core/data/save.hpp>
 #include <mlpack/methods/decision_tree/decision_tree.hpp>
-#include <armadillo>
 #include "impCalc.h"
 #include "dtreeToDot.h"
 #include <boost/program_options.hpp>
-#include <boost/program_options/cmdline.hpp>
 
 namespace po = boost::program_options;
 
