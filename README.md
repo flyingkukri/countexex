@@ -34,7 +34,6 @@ We have tested the installation on Linux Ubuntu and Fedora.
 ### Dependencies
 - [Storm dependencies](https://www.stormchecker.org/documentation/obtain-storm/dependencies.html#general-dependencies)
 - [mlpack dependencies](https://github.com/mlpack/mlpack#2-dependencies)
-- mklearn (on fedora mklearn-devel)
 - Install the [Gurobi solver](https://www.gurobi.com/) if you want to use MILP. For Linux systems, you can follow this [guide](https://ca.cs.uni-bonn.de/doku.php?id=tutorial:gurobi-install)
 - example for ubuntu
 ```bash
