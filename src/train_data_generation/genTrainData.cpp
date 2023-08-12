@@ -11,7 +11,7 @@
 #include <iostream>
 #include <armadillo>
 
-void createMatrixHelper(arma::fmat &armaData, arma::frowvec &rowVec, std::variant<std::vector<int>, std::vector<bool>> &valueVector)
+void createMatrixHelper(arma::fmat &armaData, arma::frowvec &rowVec, ValueVector &valueVector)
 {
     // Create an arma::frowvec from the vector
     if (const auto intVector = std::get_if<std::vector<int>>(&valueVector))
@@ -31,7 +31,7 @@ void createMatrixHelper(arma::fmat &armaData, arma::frowvec &rowVec, std::varian
     armaData = arma::join_vert(armaData, rowVec);
 }
 
-void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, std::variant<std::vector<int>, std::vector<bool>> &valueVector)
+void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, ValueVector &valueVector)
 {
     // We know that the variant holds an int vector in this case as it contains the action identifiers
     if (const auto intVector = std::get_if<std::vector<int>>(&valueVector))
@@ -129,7 +129,7 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
     return labels;
 }
 
-std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo)
+TrainData repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo)
 {
     arma::fmat dataNew(data.n_rows, 0);
     arma::Row<size_t> labelsNew;
@@ -149,7 +149,7 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
     return std::make_pair(trainData, labelsNew);
 }
 
-std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)
+TrainData createTrainingData(ValueMap &valueMap, ValueMap &valueMapSubMdp, MdpInfo &mdpInfo)
 {
     arma::fmat allPairsMat = createMatrixFromValueMap(valueMap, mdpInfo);
     arma::fmat strategyPairsMat = createMatrixFromValueMap(valueMapSubMdp, mdpInfo);

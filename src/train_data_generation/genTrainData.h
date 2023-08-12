@@ -47,17 +47,28 @@ typedef struct {
 } MdpInfo;
 
 /*!
+* This data structure represents the training data. It is a pair of a matrix and a row vector: the matrix contains the s-a pairs as columns, repeated as often as the importance of the state.
+* The row vector contains the labels for the s-a pairs also repeated as often as the importance of the state.
+*/
+typedef std::pair<arma::fmat, arma::Row<size_t>> TrainData;
+
+/*!
+* This data structure represents the data types of the model's variables that we support. In case of PRISM we support int and boolean variables. 
+*/
+typedef std::variant<std::vector<int>, std::vector<bool>> ValueVector;
+
+/*!
  * This data structure is our representation of the state-action pairs. 
  * it is a map from a string that is either 
  * 1. the name of a variable (or dimension in mlpack)
  * 2. "action"
  * 3. "imps"
  * 
- * to a vector of values. 
+ * to a vector of values (ValueVector).
  * The cartesian product of the n-th entry of the vectors for every key and "action" constitute a state-action pair.
  * We further add the vector imps which is the id of the state, so that we can later repeat this state-action pair as often as needed.
 */
-typedef std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>> ValueMap;
+typedef std::map<std::string, ValueVector> ValueMap;
 
 /*!
  * Print the state-action pairs of the mdp
@@ -163,7 +174,7 @@ ValueMap createStateActPairs(std::shared_ptr<MdpType>& mdp, MdpInfo& mdpInfo){
  * @param valueVector: the vector that contains the values that we want to add to the matrix
  * 
 */
-void createMatrixHelper(arma::fmat& armaData, arma::frowvec& rowVec, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
+void createMatrixHelper(arma::fmat& armaData, arma::frowvec& rowVec, ValueVector& valueVector);
 
 
 /*!
@@ -172,7 +183,7 @@ void createMatrixHelper(arma::fmat& armaData, arma::frowvec& rowVec, std::varian
  * @param mdpInfo: the MdpInfo object that contains the featureMap; the dimension of each row that we add will be called "action"
  * @param valueVector: the vector that contains the action identifiers
 */
-void categoricalFeatureOneHotEncoding(arma::fmat& armaData, MdpInfo& mdpInfo, std::variant<std::vector<int>, std::vector<bool>>& valueVector);
+void categoricalFeatureOneHotEncoding(arma::fmat& armaData, MdpInfo& mdpInfo, ValueVector& valueVector);
 
 /*!
  * We create a matrix from the valueMap. We will use mdpInfo.imps to repeat data points.
@@ -182,7 +193,7 @@ void categoricalFeatureOneHotEncoding(arma::fmat& armaData, MdpInfo& mdpInfo, st
  * @param mdpInfo: struct containing information about the MDP; we will add the feature names to the featureMap
  * @return: matrix containing the data points of the MDP (see data in develop.md for details)
  */
-arma::fmat createMatrixFromValueMap(std::map<std::string, std::variant<std::vector<int>, std::vector<bool>>>& valueMap, MdpInfo& mdpInfo);
+arma::fmat createMatrixFromValueMap(ValueMap& valueMap, MdpInfo& mdpInfo);
 
 /*!
  * Create Labels for the allPairs matrix. 1 if the pair is in the strategy, 0 otherwise
@@ -201,7 +212,7 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
  *          the row vector contains the labels for the s-a pairs also repeated as often as the importance of the state.
  *
  */
-std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);
+TrainData repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo& mdpInfo);
 
 /*!
  * The main function to create the training data from the value map
@@ -211,4 +222,4 @@ std::pair<arma::fmat, arma::Row<size_t>> repeatDataLabels(arma::fmat data, arma:
  * @param mdpInfo The MdpInfo object containing the information about the MDP
  * @return A pair of the training data and the labels.
  */
-std::pair<arma::fmat, arma::Row<size_t>> createTrainingData(ValueMap& valueMap, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
+TrainData createTrainingData(ValueMap& valueMap, ValueMap& value_map_submdp, MdpInfo& mdpInfo);
