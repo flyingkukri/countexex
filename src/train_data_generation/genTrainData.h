@@ -71,32 +71,6 @@ typedef std::variant<std::vector<int>, std::vector<bool>> ValueVector;
 typedef std::map<std::string, ValueVector> ValueMap;
 
 /*!
- * Print the state-action pairs of the mdp
- * @param mdp: the mdp for which we want to print the state-action pairs
-*/
-template <typename MdpType>
-void printStateActPairs(std::shared_ptr<MdpType>& mdp){
-    auto val = mdp->getStateValuations();
-    std::cout << "Print (s-a)-pairs: " << std::endl;
-    for(int i=0; i<mdp->getNumberOfStates(); ++i){
-        auto choices = mdp->getNumberOfChoices(i);
-        for(int k=0; k < choices; ++k){
-            auto it = val.at(i);
-            auto start = it.begin();
-            while(start != it.end()){
-                // TODO: extend to other datatypes: bool, double ... aber nur für uns also nicht unbedingt nötig
-                std::cout << start.getVariable().getName() << ": " << start.getIntegerValue() << " ";
-                start.operator++();
-            }
-            // This info should be present in the dt in the end and is represented via mdp->getChoiceOrigins()->getIdentifier(mdp->getTransitionMatrix().getRowGroupIndices()[i]+k);
-            auto choiceInfo = mdp->getChoiceOrigins()->getChoiceInfo(mdp->getTransitionMatrix().getRowGroupIndices()[i] + k);
-            std::cout << choiceInfo << " ";
-            std::cout << "\n" << std::endl;
-        }
-    }
-}
-
-/*!
  * Create a ValueMap from the mdp
  * @param mdp: the mdp for which we want extract the state-action pairs
  * @param mdpInfo: the struct containing information about the mdp (we will fill the actionIdentifierMap)
