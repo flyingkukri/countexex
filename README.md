@@ -37,7 +37,7 @@ We have tested the installation on Linux Ubuntu and Fedora.
 - Install the [Gurobi solver](https://www.gurobi.com/) if you want to use MILP. For Linux systems, you can follow this [guide](https://ca.cs.uni-bonn.de/doku.php?id=tutorial:gurobi-install)
 - example for ubuntu
 ```bash
-$ sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev
+sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev libstb-dev
 ```
 
 ### Cloning and Compiling
@@ -45,6 +45,7 @@ In the following, use *--recursive* in order to clone the submodules. Additional
 
 ```bash
 git clone git@github.com:flyingkukri/countexex.git --recursive
+cd countexex
 mkdir build
 cd build
 cmake ..
