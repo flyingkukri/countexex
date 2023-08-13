@@ -125,11 +125,11 @@ Currently, only reachability objectives are supported. Supporting different obje
 ### Supporting new input types
 At the moment, the tool supports only PRISM input files. In order to expand this support to other formats, such as Jani input files, the function *buildModelFormulas* in *src/model_builder/* has to be changed. In particular, instead of the current call to *parseProgram()*, which is tailored for parsing PRISM programs, we would need to call different parse functions depending on the input file format e.g., *parseJaniModel()*. Additionally, it has to be checked, which variable types the new format supports. As PRISM only handles integer and boolean variables, the tool only supports those data types. Thus, the function *createStateActPairs* in *src/train_data_generation/* and the *ValueMap* have to be extended to support additional data types.
 
-### Supporing parametric model checking
+### Supporting parametric model checking
 Here again, the permissive strategy computation is the limiting factor, as it expects an MDP of value type *double*, while a parametric model has type *storm::RationalFunction*.
 
 ### Soft learning option for multiple-action states vs. single-action states
-As we allow a state to be coupled with multiple actions in the liberal strategy, there might be states for which only one action is included, while for others multiple actions are included. Thus, in the learning, there might be more emphasis on states that have multiple actions. In order to compensate for that, states with only a single action could be repeated c-times in the training-data, where c is a constant.
+As we allow a state to be associated with multiple actions in the liberal strategy, there might be states for which only one action is included, while for others multiple actions are included. Thus, in the learning, there might be more emphasis on states that have multiple actions. In order to compensate for that, states with only a single action could be repeated c-times in the training-data, where c is a constant.
 
 ### Permissive strategy computation
 Currently, the computation of the permissive strategy is a performance bottleneck for the tool. For large models, such as the Zeroconf Protocol with approximately 300 thousand states, the computation does not complete even after running for 6 hours. Storm offers two implementations: one using Mixed Integer Linear Programming (MILP) and the other using Satisfiability Modulo Theories (SMT). However, neither of these approaches has completed within a reasonable timeframe. Therefore, it may be worth considering an alternative implementation for computing the liberal strategy.

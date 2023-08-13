@@ -15,7 +15,7 @@
  * @param finalStates: A bitvector containing the final states
  * @return 1 if we reached a final state, 0 otherwise
 */
-int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>> model, std::vector<int>& visited, int l, storm::storage::BitVector finalStates);
+int simulateRun(storm::simulator::DiscreteTimeSparseModelSimulator<double> simulator, storm::models::sparse::Mdp<double, storm::models::sparse::StandardRewardModel<double>>& model, std::vector<int>& visited, int l, storm::storage::BitVector& finalStates);
 
 /*!
  * This function calculates the importance of each state pair. 

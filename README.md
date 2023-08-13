@@ -34,11 +34,10 @@ We have tested the installation on Linux Ubuntu and Fedora.
 ### Dependencies
 - [Storm dependencies](https://www.stormchecker.org/documentation/obtain-storm/dependencies.html#general-dependencies)
 - [mlpack dependencies](https://github.com/mlpack/mlpack#2-dependencies)
-- mklearn (on fedora mklearn-devel)
 - Install the [Gurobi solver](https://www.gurobi.com/) if you want to use MILP. For Linux systems, you can follow this [guide](https://ca.cs.uni-bonn.de/doku.php?id=tutorial:gurobi-install)
 - example for ubuntu
 ```bash
-$ sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev
+sudo apt-get install build-essential git cmake libboost-all-dev libcln-dev libgmp-dev libginac-dev automake libglpk-dev libhwloc-dev libz3-dev libxerces-c-dev libeigen3-dev libarmadillo-dev libensmallen-dev libcereal-dev libstb-dev
 ```
 
 ### Cloning and Compiling
@@ -46,6 +45,7 @@ In the following, use *--recursive* in order to clone the submodules. Additional
 
 ```bash
 git clone git@github.com:flyingkukri/countexex.git --recursive
+cd countexex
 mkdir build
 cd build
 cmake ..
@@ -59,7 +59,12 @@ make -j${NUMBER_OF_CORES}
 if you have multiple cores and at least *8GB* of memory.  
 
 In order to be able to debug the system, set the option *STORM_DEVELOPER* to *ON* in *countexex/storm/CMakeLists.txt*.
-If you want to use the Gurobi solver that is not shipped with Storm, you need to additionally enable *STORM_USE_GUROBI* and set the path in *GUROBI_ROOT*. Thereafter, execute make.
+If you want to use the Gurobi solver that is not shipped with Storm, you need to additionally enable *STORM_USE_GUROBI* and set the path in *GUROBI_ROOT*. Thereafter, execute make.  
+
+To obtain the latest updates for the submodules at a later point, run: 
+```bash
+git submodule update --remote
+```
 
 ## Running
 

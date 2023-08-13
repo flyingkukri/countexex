@@ -34,16 +34,6 @@ std::pair<std::shared_ptr<storm::models::sparse::Mdp<double>>, std::vector<std::
 std::vector<storm::modelchecker::CheckTask<storm::logic::Formula, double>> getTasks(
         std::vector<std::shared_ptr<storm::logic::Formula const>> const& formulas);
 
-/*!
- * Visualize a model: state & choice labels, transition matrix ...
- * @param model: the model
- */
-template <typename MdpType>
-void modelVis(std::shared_ptr<MdpType>& model){
-    model->printModelInformationToStream(std::cout);
-    auto transM = model->getTransitionMatrix();
-    transM.printAsMatlabMatrix(std::cout);
-}
 
 /*!
  * Set up the environment for the model checking
