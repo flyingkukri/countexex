@@ -58,7 +58,7 @@ make -j${NUMBER_OF_CORES}
 ```
 if you have multiple cores and at least *8GB* of memory.  
 
-In order to be able to debug the system, set the option *STORM_DEVELOPER* to *ON* in *countexex/storm/CMakeLists.txt*.
+To enable system debugging, set the *STORM_DEVELOPER* option to *ON*. You can achieve this by running *ccmake ..* and configuring the options presented there.  
 If you want to use the Gurobi solver that is not shipped with Storm, you need to additionally enable *STORM_USE_GUROBI* and set the path in *GUROBI_ROOT*. Thereafter, execute make.  
 
 To obtain the latest updates for the submodules at a later point, run: 
