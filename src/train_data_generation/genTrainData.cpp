@@ -56,6 +56,8 @@ void categoricalFeatureOneHotEncoding(arma::fmat &armaData, MdpInfo &mdpInfo, Va
 
         }
 
+    } else {
+        throw std::invalid_argument("valueVector does not contain an int vector");
     }
 }
 
@@ -75,7 +77,10 @@ arma::fmat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
     {
         std::variant<std::vector<int>, std::vector<bool>> valueVector = it->second;
         createMatrixHelper(armaData, rowVec, valueVector);
-    } // No entry in featureMap for imps as this row will be removed from the matrix for training
+        // No entry in featureMap for imps as this row will be removed from the matrix for training
+    } else {
+        throw std::invalid_argument("value_map does not have any state id's (a key \"imps\")");
+    } 
 
     // One-hot encoding for the categorical action features
     it = valueMap.find(act);
@@ -103,6 +108,9 @@ arma::fmat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 
 arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPairs)
 {
+    if (allPairs.n_cols != strategyPairs.n_cols) {
+        throw std::invalid_argument("allPairs.n_cols != strategyPairs.n_cols");
+    }
     // Column-major in arma: thus each column represents a data point
     size_t numColumns = allPairs.n_cols;
     arma::Row<size_t> labels(numColumns, arma::fill::zeros);
@@ -129,8 +137,14 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
     return labels;
 }
 
-TrainData repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo)
+TrainData repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo) 
 {
+    if (data.n_rows != labels.n_rows) {
+        throw std::invalid_argument("data.n_rows != labels.n_rows");
+    }
+    if (data.col(0).max() > mdpInfo.imps.size()) {
+        throw std::invalid_argument("The imps vector is shorter than the amount of states.");
+    }
     arma::fmat dataNew(data.n_rows, 0);
     arma::Row<size_t> labelsNew;
     for (int c = 0; c < data.n_cols; ++c)
