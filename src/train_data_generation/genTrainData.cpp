@@ -102,8 +102,8 @@ arma::fmat createMatrixFromValueMap(ValueMap &valueMap, MdpInfo &mdpInfo)
 
 arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPairs)
 {
-    if (allPairs.n_cols != strategyPairs.n_cols) {
-        throw std::invalid_argument("allPairs.n_cols != strategyPairs.n_cols");
+    if (allPairs.n_rows != strategyPairs.n_rows) {
+        throw std::invalid_argument("allPairs.n_rows != strategyPairs.n_rows");
     }
     // Column-major in arma: thus each column represents a data point
     size_t numColumns = allPairs.n_cols;
@@ -133,11 +133,8 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
 
 TrainData repeatDataLabels(arma::fmat data, arma::Row<size_t> labels, const MdpInfo &mdpInfo) 
 {
-    if (data.n_rows != labels.n_rows) {
-        throw std::invalid_argument("data.n_rows != labels.n_rows");
-    }
-    if (data.col(0).max() > mdpInfo.imps.size()) {
-        throw std::invalid_argument("The imps vector is shorter than the amount of states.");
+    if (data.n_cols != labels.n_cols) {
+        throw std::invalid_argument("data.n_cols != labels.n_cols");
     }
     arma::fmat dataNew(data.n_rows, 0);
     arma::Row<size_t> labelsNew;

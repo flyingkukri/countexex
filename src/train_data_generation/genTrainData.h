@@ -179,7 +179,7 @@ arma::Row<size_t> createDataLabels(arma::fmat &allPairs, arma::fmat &strategyPai
 
 /*! 
  * Repeat the data points according to the importance of the state (and remove the importance row)
- * The first column of the matrix must be the state ids.
+ * The first row of the matrix must be the state ids.
  * @param data: matrix containing the s-a pairs
  * @param labels: vector containing the labels for the s-a pairs
  * @param mdpInfo: struct containing struct.importance for the importance of each state
